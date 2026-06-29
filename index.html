@@ -5,185 +5,163 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>نظام الحضور والانصراف</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
-
 :root {
-  --primary: #1e40af;
-  --primary-light: #3b82f6;
-  --primary-dark: #1e3a8a;
-  --accent: #0ea5e9;
-  --success: #10b981;
-  --success-dark: #059669;
-  --danger: #ef4444;
-  --danger-dark: #dc2626;
-  --warning: #f59e0b;
-  --bg: #eef2ff;
-  --surface: #ffffff;
-  --surface2: #f8faff;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --text-muted: #64748b;
-  --shadow-sm: 0 1px 3px rgba(30,64,175,0.08);
-  --shadow: 0 4px 16px rgba(30,64,175,0.1);
-  --shadow-lg: 0 10px 40px rgba(30,64,175,0.15);
-  --radius: 18px;
-  --radius-sm: 11px;
+  --primary:#1e40af;--primary-light:#3b82f6;--primary-dark:#1e3a8a;
+  --accent:#0ea5e9;--success:#10b981;--success-dark:#059669;
+  --danger:#ef4444;--danger-dark:#dc2626;--warning:#f59e0b;
+  --bg:#eef2ff;--surface:#ffffff;--surface2:#f8faff;--border:#e2e8f0;
+  --text:#0f172a;--text-muted:#64748b;
+  --shadow-sm:0 1px 3px rgba(30,64,175,0.08);
+  --shadow:0 4px 16px rgba(30,64,175,0.1);
+  --shadow-lg:0 10px 40px rgba(30,64,175,0.15);
+  --radius:18px;--radius-sm:11px;
 }
-
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; direction:rtl; }
-
-/* ── Screens ── */
-.screen { display:none; min-height:100vh; }
-.screen.active { display:flex; flex-direction:column; }
-
-/* ── Loading ── */
-#loadingScreen { align-items:center; justify-content:center; background:linear-gradient(135deg,#1e3a8a,#0ea5e9); }
-.loader-box { text-align:center; color:white; }
-.loader-box .logo-big { font-size:52px; margin-bottom:12px; }
-.loader-box h2 { font-size:20px; font-weight:800; margin-bottom:6px; }
-.loader-box p { font-size:14px; opacity:0.7; }
-.spinner { width:36px; height:36px; border:3px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin 0.8s linear infinite; margin:20px auto 0; }
-@keyframes spin { to { transform:rotate(360deg); } }
-
-/* ── Auth ── */
-#authScreen { background:linear-gradient(135deg,#1e3a8a 0%,#1e40af 50%,#0ea5e9 100%); align-items:center; justify-content:center; padding:20px; }
-.auth-card { background:white; border-radius:24px; padding:36px 32px; width:100%; max-width:420px; box-shadow:0 25px 60px rgba(0,0,0,0.25); }
-.auth-logo { text-align:center; margin-bottom:24px; }
-.auth-logo .logo-icon { width:62px; height:62px; background:linear-gradient(135deg,#1e40af,#0ea5e9); border-radius:17px; display:inline-flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:10px; box-shadow:0 8px 20px rgba(30,64,175,0.3); }
-.auth-logo h1 { font-size:21px; font-weight:900; color:var(--primary-dark); }
-.auth-logo p { font-size:13px; color:var(--text-muted); }
-.auth-tabs { display:flex; border-radius:10px; overflow:hidden; background:var(--surface2); border:1px solid var(--border); margin-bottom:22px; }
-.auth-tab { flex:1; padding:10px; text-align:center; cursor:pointer; font-size:14px; font-weight:700; color:var(--text-muted); font-family:'Cairo',sans-serif; background:none; border:none; transition:all 0.2s; }
-.auth-tab.active { background:white; color:var(--primary); box-shadow:var(--shadow-sm); border-radius:8px; margin:3px; }
-.form-group { margin-bottom:16px; }
-.form-group label { display:block; font-size:13px; font-weight:700; color:var(--text); margin-bottom:6px; }
-.form-group input { width:100%; padding:11px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:14px; font-family:'Cairo',sans-serif; color:var(--text); background:var(--surface2); direction:rtl; text-align:right; transition:all 0.2s; outline:none; }
-.form-group input[type=email], .form-group input[type=password], .form-group input[type=number] { direction:ltr; text-align:left; }
-.form-group input:focus { border-color:var(--primary-light); box-shadow:0 0 0 3px rgba(59,130,246,0.15); background:white; }
-.btn-primary { width:100%; padding:13px; background:linear-gradient(135deg,#1e40af,#3b82f6); color:white; border:none; border-radius:var(--radius-sm); font-size:15px; font-weight:800; font-family:'Cairo',sans-serif; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 14px rgba(30,64,175,0.35); }
-.btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(30,64,175,0.45); }
-.btn-primary:active { transform:translateY(0); }
-.btn-primary:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
-.auth-msg { border-radius:9px; padding:10px 14px; font-size:13px; margin-bottom:14px; display:none; }
-.auth-msg.error { background:#fef2f2; border:1px solid #fecaca; color:#dc2626; }
-.auth-msg.success { background:#f0fdf4; border:1px solid #bbf7d0; color:#15803d; }
-
-/* ── Topbar ── */
-.topbar { background:linear-gradient(135deg,#1e3a8a,#1e40af 60%,#1d4ed8); padding:14px 18px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(30,64,175,0.3); }
-.topbar-brand { font-size:16px; font-weight:900; color:white; }
-.btn-logout { background:rgba(255,255,255,0.15); color:white; border:1px solid rgba(255,255,255,0.25); border-radius:8px; padding:7px 14px; font-size:13px; font-weight:700; font-family:'Cairo',sans-serif; cursor:pointer; transition:all 0.2s; }
-.btn-logout:hover { background:rgba(255,255,255,0.25); }
-
-/* ── Nav Tabs ── */
-.nav-tabs { background:white; border-bottom:1px solid var(--border); display:flex; position:sticky; top:52px; z-index:99; }
-.nav-tab { flex:1; padding:13px 8px; text-align:center; font-size:13px; font-weight:700; color:var(--text-muted); border:none; background:none; font-family:'Cairo',sans-serif; cursor:pointer; border-bottom:3px solid transparent; transition:all 0.2s; }
-.nav-tab.active { color:var(--primary); border-bottom-color:var(--primary); background:var(--surface2); }
-
-/* ── Pages ── */
-.page { display:none; padding:18px; max-width:640px; margin:0 auto; }
-.page.active { display:block; }
-
-/* ── Welcome Card ── */
-.welcome-card { background:linear-gradient(135deg,#1e40af,#0ea5e9); border-radius:var(--radius); padding:22px 18px; color:white; margin-bottom:14px; box-shadow:var(--shadow-lg); position:relative; overflow:hidden; }
-.welcome-card::before { content:''; position:absolute; top:-30px; left:-30px; width:110px; height:110px; background:rgba(255,255,255,0.07); border-radius:50%; }
-.welcome-text { font-size:13px; opacity:0.85; }
-.welcome-name { font-size:21px; font-weight:900; margin-bottom:10px; }
-.datetime-row { display:flex; gap:10px; flex-wrap:wrap; }
-.dt-badge { background:rgba(255,255,255,0.2); border-radius:8px; padding:5px 11px; font-size:13px; font-weight:600; backdrop-filter:blur(4px); }
-
-/* ── Clock Card ── */
-.clock-card { background:white; border-radius:var(--radius); padding:26px 18px; margin-bottom:14px; box-shadow:var(--shadow); text-align:center; }
-.session-badge { font-size:12px; font-weight:700; padding:6px 14px; border-radius:20px; display:inline-block; margin-bottom:18px; background:var(--surface2); color:var(--text-muted); }
-.session-badge.on { background:#f0fdf4; color:#15803d; }
-.clock-btn { width:170px; height:170px; border-radius:50%; border:none; font-family:'Cairo',sans-serif; cursor:pointer; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-.clock-btn.checkin { background:linear-gradient(135deg,#10b981,#059669); color:white; box-shadow:0 8px 28px rgba(16,185,129,0.4); }
-.clock-btn.checkout { background:linear-gradient(135deg,#ef4444,#dc2626); color:white; box-shadow:0 8px 28px rgba(239,68,68,0.4); }
-.clock-btn:hover { transform:scale(1.06); }
-.clock-btn:active { transform:scale(0.96); }
-.clock-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none !important; }
-.clock-btn .ci { font-size:34px; }
-.clock-btn .ct { font-size:14px; font-weight:800; line-height:1.3; }
-.session-timer { margin-top:16px; display:none; }
-.session-timer.on { display:block; }
-.timer-lbl { font-size:12px; color:var(--text-muted); font-weight:600; margin-bottom:3px; }
-.timer-val { font-size:30px; font-weight:900; color:var(--primary); letter-spacing:2px; }
-.checkin-info { margin-top:12px; font-size:13px; color:var(--text-muted); display:none; }
-.checkin-info.on { display:block; }
-
-/* ── Stats Grid ── */
-.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:14px; }
-.stat-card { background:white; border-radius:var(--radius-sm); padding:16px; box-shadow:var(--shadow-sm); text-align:center; }
-.stat-val { font-size:24px; font-weight:900; color:var(--primary); }
-.stat-lbl { font-size:12px; color:var(--text-muted); font-weight:600; margin-top:2px; }
-
-/* ── Cards ── */
-.card { background:white; border-radius:var(--radius); padding:20px 18px; margin-bottom:14px; box-shadow:var(--shadow); }
-.card-title { font-size:15px; font-weight:900; color:var(--text); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-.card-title .ic { font-size:17px; }
-
-/* ── History Table ── */
-.history-table { width:100%; border-collapse:collapse; font-size:13px; }
-.history-table th { background:var(--surface2); font-size:11px; font-weight:800; color:var(--text-muted); padding:8px 9px; text-align:right; }
-.history-table th:first-child { border-radius:0 8px 8px 0; }
-.history-table th:last-child { border-radius:8px 0 0 8px; }
-.history-table td { padding:9px; border-bottom:1px solid var(--border); vertical-align:middle; }
-.history-table tr:last-child td { border-bottom:none; }
-.hours-badge { background:#eff6ff; color:var(--primary); padding:3px 8px; border-radius:6px; font-weight:800; font-size:12px; }
-.action-btns { display:flex; gap:5px; justify-content:flex-end; }
-.btn-edit { background:#eff6ff; color:var(--primary); border:none; border-radius:6px; padding:4px 9px; font-size:11px; font-weight:700; font-family:'Cairo',sans-serif; cursor:pointer; }
-.btn-del { background:#fef2f2; color:var(--danger); border:none; border-radius:6px; padding:4px 9px; font-size:11px; font-weight:700; font-family:'Cairo',sans-serif; cursor:pointer; }
-
-/* ── Empty State ── */
-.empty-state { text-align:center; padding:30px 0; color:var(--text-muted); }
-.empty-state .ei { font-size:38px; margin-bottom:8px; }
-.empty-state p { font-size:13px; }
-
-/* ── Salary Page ── */
-.period-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
-.period-input label { display:block; font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:5px; }
-.period-input input { width:100%; padding:9px 11px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:'Cairo',sans-serif; background:var(--surface2); direction:ltr; text-align:center; outline:none; transition:border-color 0.2s; }
-.period-input input:focus { border-color:var(--primary-light); background:white; }
-.salary-calc-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
-.calc-box { background:var(--surface2); border-radius:var(--radius-sm); padding:14px; text-align:center; border:1.5px solid var(--border); }
-.calc-box label { display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px; }
-.calc-box input { width:100%; border:none; background:transparent; font-size:20px; font-weight:900; color:var(--primary); text-align:center; font-family:'Cairo',sans-serif; outline:none; }
-.salary-result-box { background:linear-gradient(135deg,#eff6ff,#dbeafe); border-radius:var(--radius-sm); padding:20px; text-align:center; border:1px solid #bfdbfe; }
-.salary-result-box .sr-lbl { font-size:13px; color:var(--primary); font-weight:700; margin-bottom:4px; }
-.salary-result-box .sr-amt { font-size:36px; font-weight:900; color:var(--primary-dark); }
-.salary-result-box .sr-cur { font-size:13px; color:var(--text-muted); }
-
-/* ── Manual Entry ── */
-.manual-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-bottom:12px; }
-.manual-grid.full { grid-template-columns:1fr; }
-.manual-field label { display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px; }
-.manual-field input { width:100%; padding:9px 11px; border:1.5px solid var(--border); border-radius:9px; font-size:13px; font-family:'Cairo',sans-serif; background:var(--surface2); direction:ltr; text-align:center; outline:none; transition:border-color 0.2s; }
-.manual-field input:focus { border-color:var(--primary-light); background:white; }
-.btn-add { background:linear-gradient(135deg,#1e40af,#3b82f6); color:white; border:none; border-radius:var(--radius-sm); padding:11px 20px; font-size:14px; font-weight:800; font-family:'Cairo',sans-serif; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 12px rgba(30,64,175,0.3); width:100%; }
-.btn-add:hover { transform:translateY(-1px); }
-.btn-add:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
-
-/* ── Modal ── */
-.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:none; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(3px); }
-.modal-overlay.show { display:flex; }
-.modal-box { background:white; border-radius:20px; padding:28px 24px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
-.modal-title { font-size:17px; font-weight:900; margin-bottom:20px; }
-.modal-actions { display:flex; gap:10px; margin-top:20px; }
-.btn-cancel { flex:1; padding:11px; background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:14px; font-weight:700; font-family:'Cairo',sans-serif; cursor:pointer; color:var(--text-muted); }
-.btn-save { flex:1; padding:11px; background:linear-gradient(135deg,#1e40af,#3b82f6); color:white; border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:800; font-family:'Cairo',sans-serif; cursor:pointer; }
-
-/* ── Toast ── */
-.toast { position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--text); color:white; padding:12px 20px; border-radius:12px; font-size:14px; font-weight:700; box-shadow:var(--shadow-lg); z-index:999; transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space:nowrap; direction:rtl; font-family:'Cairo',sans-serif; }
-.toast.show { transform:translateX(-50%) translateY(0); }
-.toast.success { background:#059669; }
-.toast.error { background:#dc2626; }
-
-@media(max-width:420px) {
-  .manual-grid { grid-template-columns:1fr 1fr; }
-  .stats-grid { grid-template-columns:1fr 1fr; }
-  .salary-calc-grid { grid-template-columns:1fr; }
-  .period-row { grid-template-columns:1fr; }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+/* Loading */
+#loadingScreen{align-items:center;justify-content:center;background:linear-gradient(135deg,#1e3a8a,#0ea5e9);}
+.loader-box{text-align:center;color:white;}
+.loader-box .logo-big{font-size:52px;margin-bottom:12px;}
+.loader-box h2{font-size:20px;font-weight:800;margin-bottom:6px;}
+.loader-box p{font-size:14px;opacity:0.7;}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;margin:20px auto 0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+/* Auth */
+#authScreen{background:linear-gradient(135deg,#1e3a8a 0%,#1e40af 50%,#0ea5e9 100%);align-items:center;justify-content:center;padding:20px;}
+.auth-card{background:white;border-radius:24px;padding:36px 32px;width:100%;max-width:420px;box-shadow:0 25px 60px rgba(0,0,0,0.25);}
+.auth-logo{text-align:center;margin-bottom:24px;}
+.auth-logo .logo-icon{width:62px;height:62px;background:linear-gradient(135deg,#1e40af,#0ea5e9);border-radius:17px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:10px;box-shadow:0 8px 20px rgba(30,64,175,0.3);}
+.auth-logo h1{font-size:21px;font-weight:900;color:var(--primary-dark);}
+.auth-logo p{font-size:13px;color:var(--text-muted);}
+.auth-tabs{display:flex;border-radius:10px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);margin-bottom:22px;}
+.auth-tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-size:14px;font-weight:700;color:var(--text-muted);font-family:'Cairo',sans-serif;background:none;border:none;transition:all 0.2s;}
+.auth-tab.active{background:white;color:var(--primary);box-shadow:var(--shadow-sm);border-radius:8px;margin:3px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.form-group input{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'Cairo',sans-serif;color:var(--text);background:var(--surface2);transition:all 0.2s;outline:none;}
+.form-group input[type=text]{direction:rtl;text-align:right;}
+.form-group input[type=email],.form-group input[type=password],.form-group input[type=number]{direction:ltr;text-align:left;}
+.form-group input:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(59,130,246,0.15);background:white;}
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 14px rgba(30,64,175,0.35);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(30,64,175,0.45);}
+.btn-primary:active{transform:translateY(0);}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+.auth-msg{border-radius:9px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;}
+.auth-msg.error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;}
+.auth-msg.success{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;}
+.link-btn{background:none;border:none;color:var(--primary);font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;text-decoration:underline;margin-top:10px;display:block;text-align:center;}
+/* Topbar */
+.topbar{background:linear-gradient(135deg,#1e3a8a,#1e40af 60%,#1d4ed8);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(30,64,175,0.3);}
+.topbar-brand{font-size:16px;font-weight:900;color:white;}
+.btn-logout{background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;}
+.btn-logout:hover{background:rgba(255,255,255,0.25);}
+/* Nav */
+.nav-tabs{background:white;border-bottom:1px solid var(--border);display:flex;position:sticky;top:52px;z-index:99;}
+.nav-tab{flex:1;padding:13px 8px;text-align:center;font-size:13px;font-weight:700;color:var(--text-muted);border:none;background:none;font-family:'Cairo',sans-serif;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;}
+.nav-tab.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--surface2);}
+/* Pages */
+.page{display:none;padding:18px;max-width:640px;margin:0 auto;}
+.page.active{display:block;}
+/* Welcome */
+.welcome-card{background:linear-gradient(135deg,#1e40af,#0ea5e9);border-radius:var(--radius);padding:22px 18px;color:white;margin-bottom:14px;box-shadow:var(--shadow-lg);position:relative;overflow:hidden;}
+.welcome-card::before{content:'';position:absolute;top:-30px;left:-30px;width:110px;height:110px;background:rgba(255,255,255,0.07);border-radius:50%;}
+.welcome-text{font-size:13px;opacity:0.85;}
+.welcome-name{font-size:21px;font-weight:900;margin-bottom:10px;}
+.datetime-row{display:flex;gap:10px;flex-wrap:wrap;}
+.dt-badge{background:rgba(255,255,255,0.2);border-radius:8px;padding:5px 11px;font-size:13px;font-weight:600;backdrop-filter:blur(4px);}
+/* Clock */
+.clock-card{background:white;border-radius:var(--radius);padding:26px 18px;margin-bottom:14px;box-shadow:var(--shadow);text-align:center;}
+.session-badge{font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;display:inline-block;margin-bottom:18px;background:var(--surface2);color:var(--text-muted);}
+.session-badge.on{background:#f0fdf4;color:#15803d;}
+.clock-btn{width:170px;height:170px;border-radius:50%;border:none;font-family:'Cairo',sans-serif;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);}
+.clock-btn.checkin{background:linear-gradient(135deg,#10b981,#059669);color:white;box-shadow:0 8px 28px rgba(16,185,129,0.4);}
+.clock-btn.checkout{background:linear-gradient(135deg,#ef4444,#dc2626);color:white;box-shadow:0 8px 28px rgba(239,68,68,0.4);}
+.clock-btn:hover{transform:scale(1.06);}
+.clock-btn:active{transform:scale(0.96);}
+.clock-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important;}
+.clock-btn .ci{font-size:34px;}
+.clock-btn .ct{font-size:14px;font-weight:800;line-height:1.3;}
+.session-timer{margin-top:16px;display:none;}
+.session-timer.on{display:block;}
+.timer-lbl{font-size:12px;color:var(--text-muted);font-weight:600;margin-bottom:3px;}
+.timer-val{font-size:30px;font-weight:900;color:var(--primary);letter-spacing:2px;}
+.checkin-info{margin-top:12px;font-size:13px;color:var(--text-muted);display:none;}
+.checkin-info.on{display:block;}
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px;}
+.stat-card{background:white;border-radius:var(--radius-sm);padding:16px;box-shadow:var(--shadow-sm);text-align:center;}
+.stat-val{font-size:24px;font-weight:900;color:var(--primary);}
+.stat-lbl{font-size:12px;color:var(--text-muted);font-weight:600;margin-top:2px;}
+/* Cards */
+.card{background:white;border-radius:var(--radius);padding:20px 18px;margin-bottom:14px;box-shadow:var(--shadow);}
+.card-title{font-size:15px;font-weight:900;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.card-title .ic{font-size:17px;}
+/* Entry Mode Toggle */
+.mode-toggle{display:flex;border-radius:10px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);margin-bottom:16px;}
+.mode-btn{flex:1;padding:9px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--text-muted);font-family:'Cairo',sans-serif;background:none;border:none;transition:all 0.2s;}
+.mode-btn.active{background:white;color:var(--primary);box-shadow:var(--shadow-sm);border-radius:8px;margin:3px;}
+/* Manual Grid */
+.manual-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:12px;}
+.manual-grid.two{grid-template-columns:1fr 1fr;}
+.manual-grid.full{grid-template-columns:1fr;}
+.manual-field label{display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:5px;}
+.manual-field input{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:'Cairo',sans-serif;background:var(--surface2);direction:ltr;text-align:center;outline:none;transition:border-color 0.2s;}
+.manual-field input[type=text]{direction:rtl;text-align:right;}
+.manual-field input:focus{border-color:var(--primary-light);background:white;}
+.btn-add{background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;border:none;border-radius:var(--radius-sm);padding:11px 20px;font-size:14px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(30,64,175,0.3);width:100%;}
+.btn-add:hover{transform:translateY(-1px);}
+.btn-add:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+/* History Table */
+.history-table{width:100%;border-collapse:collapse;font-size:13px;}
+.history-table th{background:var(--surface2);font-size:11px;font-weight:800;color:var(--text-muted);padding:8px 9px;text-align:right;}
+.history-table th:first-child{border-radius:0 8px 8px 0;}
+.history-table th:last-child{border-radius:8px 0 0 8px;}
+.history-table td{padding:9px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.history-table tr:last-child td{border-bottom:none;}
+.hours-badge{background:#eff6ff;color:var(--primary);padding:3px 8px;border-radius:6px;font-weight:800;font-size:12px;}
+.action-btns{display:flex;gap:5px;justify-content:flex-end;}
+.btn-edit{background:#eff6ff;color:var(--primary);border:none;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;}
+.btn-del{background:#fef2f2;color:var(--danger);border:none;border-radius:6px;padding:4px 9px;font-size:11px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;}
+/* Empty */
+.empty-state{text-align:center;padding:30px 0;color:var(--text-muted);}
+.empty-state .ei{font-size:38px;margin-bottom:8px;}
+.empty-state p{font-size:13px;}
+/* Salary */
+.period-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.period-input label{display:block;font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:5px;}
+.period-input input{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'Cairo',sans-serif;background:var(--surface2);direction:ltr;text-align:center;outline:none;transition:border-color 0.2s;}
+.period-input input:focus{border-color:var(--primary-light);background:white;}
+.salary-calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.calc-box{background:var(--surface2);border-radius:var(--radius-sm);padding:14px;text-align:center;border:1.5px solid var(--border);}
+.calc-box label{display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;}
+.calc-box input{width:100%;border:none;background:transparent;font-size:20px;font-weight:900;color:var(--primary);text-align:center;font-family:'Cairo',sans-serif;outline:none;}
+.salary-result-box{background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:var(--radius-sm);padding:20px;text-align:center;border:1px solid #bfdbfe;}
+.salary-result-box .sr-lbl{font-size:13px;color:var(--primary);font-weight:700;margin-bottom:4px;}
+.salary-result-box .sr-amt{font-size:36px;font-weight:900;color:var(--primary-dark);}
+.salary-result-box .sr-cur{font-size:13px;color:var(--text-muted);}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
+.modal-overlay.show{display:flex;}
+.modal-box{background:white;border-radius:20px;padding:28px 24px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+.modal-title{font-size:17px;font-weight:900;margin-bottom:20px;}
+.modal-actions{display:flex;gap:10px;margin-top:20px;}
+.btn-cancel{flex:1;padding:11px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;color:var(--text-muted);}
+.btn-save{flex:1;padding:11px;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:800;font-family:'Cairo',sans-serif;cursor:pointer;}
+/* Toast */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:white;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:700;box-shadow:var(--shadow-lg);z-index:999;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;direction:rtl;font-family:'Cairo',sans-serif;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{background:#059669;}
+.toast.error{background:#dc2626;}
+@media(max-width:420px){
+  .manual-grid{grid-template-columns:1fr 1fr;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .salary-calc-grid{grid-template-columns:1fr;}
+  .period-row{grid-template-columns:1fr;}
 }
 </style>
 </head>
@@ -210,6 +188,7 @@ body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); 
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchTab('login')">تسجيل الدخول</button>
       <button class="auth-tab" onclick="switchTab('register')">إنشاء حساب</button>
+      <button class="auth-tab" onclick="switchTab('forgot')">نسيت كلمة المرور؟</button>
     </div>
     <div id="authMsg" class="auth-msg"></div>
 
@@ -222,11 +201,18 @@ body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); 
 
     <!-- Register -->
     <div id="registerForm" style="display:none">
-      <div class="form-group"><label>الاسم الكامل</label><input type="text" id="rName" placeholder="محمد أحمد" style="direction:rtl;text-align:right"></div>
+      <div class="form-group"><label>الاسم الكامل</label><input type="text" id="rName" placeholder="محمد أحمد"></div>
       <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="rEmail" placeholder="example@email.com"></div>
       <div class="form-group"><label>كلمة المرور (6 أحرف على الأقل)</label><input type="password" id="rPass" placeholder="••••••••"></div>
       <div class="form-group"><label>سعر ساعة العمل (جنيه)</label><input type="number" id="rRate" placeholder="50" min="0"></div>
       <button class="btn-primary" id="registerBtn" onclick="handleRegister()">إنشاء الحساب</button>
+    </div>
+
+    <!-- Forgot Password -->
+    <div id="forgotForm" style="display:none">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">أدخل بريدك الإلكتروني وهنبعتلك كلمة المرور الحالية على إيميلك.</p>
+      <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="fEmail" placeholder="example@email.com"></div>
+      <button class="btn-primary" id="forgotBtn" onclick="handleForgot()">📧 إرسال كلمة المرور</button>
     </div>
   </div>
 </div>
@@ -237,14 +223,13 @@ body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); 
     <div class="topbar-brand">⏱️ نظام الحضور</div>
     <button class="btn-logout" onclick="handleLogout()">خروج ↩</button>
   </div>
-
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchPage('home')">🏠 الرئيسية</button>
     <button class="nav-tab" onclick="switchPage('records')">📋 السجلات</button>
     <button class="nav-tab" onclick="switchPage('salary')">💰 الراتب</button>
   </div>
 
-  <!-- Home Page -->
+  <!-- Home -->
   <div id="homePage" class="page active">
     <div class="welcome-card">
       <div class="welcome-text">أهلاً وسهلاً،</div>
@@ -275,20 +260,39 @@ body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); 
 
     <!-- Manual Entry -->
     <div class="card">
-      <div class="card-title"><span class="ic">✏️</span> إضافة / تعديل سجل يدوياً</div>
-      <div class="manual-grid">
-        <div class="manual-field"><label>التاريخ</label><input type="date" id="manDate"></div>
-        <div class="manual-field"><label>من الساعة</label><input type="time" id="manIn"></div>
-        <div class="manual-field"><label>إلى الساعة</label><input type="time" id="manOut"></div>
+      <div class="card-title"><span class="ic">✏️</span> إضافة سجل يدوياً</div>
+
+      <!-- Mode Toggle -->
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="modeTimeBtn" onclick="switchMode('time')">⏰ من/إلى ساعة</button>
+        <button class="mode-btn" id="modeHoursBtn" onclick="switchMode('hours')">🔢 عدد الساعات مباشرة</button>
       </div>
+
+      <!-- Time Mode -->
+      <div id="timeModeFields">
+        <div class="manual-grid">
+          <div class="manual-field"><label>التاريخ</label><input type="date" id="manDate"></div>
+          <div class="manual-field"><label>من الساعة</label><input type="time" id="manIn"></div>
+          <div class="manual-field"><label>إلى الساعة</label><input type="time" id="manOut"></div>
+        </div>
+      </div>
+
+      <!-- Hours Mode -->
+      <div id="hoursModeFields" style="display:none">
+        <div class="manual-grid two">
+          <div class="manual-field"><label>التاريخ</label><input type="date" id="manDateH"></div>
+          <div class="manual-field"><label>عدد الساعات</label><input type="number" id="manHours" placeholder="8.5" step="0.25" min="0.25" max="24"></div>
+        </div>
+      </div>
+
       <div class="manual-grid full" style="margin-bottom:12px">
-        <div class="manual-field"><label>ملاحظة (اختياري)</label><input type="text" id="manNote" placeholder="مثال: ورديه مسائية" style="direction:rtl;text-align:right"></div>
+        <div class="manual-field"><label>ملاحظة (اختياري)</label><input type="text" id="manNote" placeholder="مثال: ورديه مسائية"></div>
       </div>
       <button class="btn-add" id="addBtn" onclick="handleManualAdd()">➕ إضافة السجل</button>
     </div>
   </div>
 
-  <!-- Records Page -->
+  <!-- Records -->
   <div id="recordsPage" class="page">
     <div class="card">
       <div class="card-title"><span class="ic">📋</span> سجل أيام العمل الكامل</div>
@@ -296,7 +300,7 @@ body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); 
     </div>
   </div>
 
-  <!-- Salary Page -->
+  <!-- Salary -->
   <div id="salaryPage" class="page">
     <div class="card">
       <div class="card-title"><span class="ic">📅</span> فلترة بالفترة الزمنية</div>
@@ -306,12 +310,11 @@ body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); 
       </div>
       <button class="btn-add" onclick="resetPeriod()" style="background:var(--surface2);color:var(--text-muted);box-shadow:none;border:1.5px solid var(--border);">🔄 عرض الكل</button>
     </div>
-
     <div class="card">
       <div class="card-title"><span class="ic">💰</span> حاسبة الراتب</div>
       <div class="salary-calc-grid">
         <div class="calc-box"><label>إجمالي الساعات</label><input type="number" id="salHours" readonly placeholder="0"></div>
-        <div class="calc-box"><label>سعر الساعة (جنيه)</label><input type="number" id="salRate" placeholder="0" oninput="calcSalary(); saveRate()"></div>
+        <div class="calc-box"><label>سعر الساعة (جنيه)</label><input type="number" id="salRate" placeholder="0" oninput="calcSalary();saveRate()"></div>
       </div>
       <div class="salary-result-box">
         <div class="sr-lbl">الراتب المتوقع</div>
@@ -319,7 +322,6 @@ body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); 
         <div class="sr-cur">جنيه مصري</div>
       </div>
     </div>
-
     <div class="card">
       <div class="card-title"><span class="ic">📊</span> ملخص الفترة</div>
       <div id="salaryBreakdown"><div class="empty-state"><div class="ei">📊</div><p>اختر فترة أو اعرض الكل</p></div></div>
@@ -332,12 +334,31 @@ body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); 
   <div class="modal-box">
     <div class="modal-title">✏️ تعديل السجل</div>
     <input type="hidden" id="editId">
-    <div class="manual-grid" style="grid-template-columns:1fr 1fr 1fr">
-      <div class="manual-field"><label>التاريخ</label><input type="date" id="editDate"></div>
-      <div class="manual-field"><label>من</label><input type="time" id="editIn"></div>
-      <div class="manual-field"><label>إلى</label><input type="time" id="editOut"></div>
+
+    <div class="mode-toggle" style="margin-bottom:14px">
+      <button class="mode-btn active" id="editModeTimeBtn" onclick="switchEditMode('time')">⏰ من/إلى ساعة</button>
+      <button class="mode-btn" id="editModeHoursBtn" onclick="switchEditMode('hours')">🔢 عدد الساعات</button>
     </div>
-    <div class="manual-field" style="margin-top:10px"><label>ملاحظة</label><input type="text" id="editNote" style="width:100%;direction:rtl;text-align:right"></div>
+
+    <div id="editTimeFields">
+      <div class="manual-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="manual-field"><label>التاريخ</label><input type="date" id="editDate"></div>
+        <div class="manual-field"><label>من</label><input type="time" id="editIn"></div>
+        <div class="manual-field"><label>إلى</label><input type="time" id="editOut"></div>
+      </div>
+    </div>
+
+    <div id="editHoursFields" style="display:none">
+      <div class="manual-grid two">
+        <div class="manual-field"><label>التاريخ</label><input type="date" id="editDateH"></div>
+        <div class="manual-field"><label>عدد الساعات</label><input type="number" id="editHours" placeholder="8.5" step="0.25" min="0.25" max="24"></div>
+      </div>
+    </div>
+
+    <div class="manual-field" style="margin-top:10px">
+      <label>ملاحظة</label>
+      <input type="text" id="editNote" style="width:100%">
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
       <button class="btn-save" onclick="saveEdit()">💾 حفظ</button>
@@ -348,22 +369,25 @@ body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); 
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Supabase Config ──
+// ── Config ──
 const SUPA_URL = 'https://kfrxhngqmmhvmzusklam.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmcnhobmdxbW1odm16dXNrbGFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2NzE2NTYsImV4cCI6MjA5ODI0NzY1Nn0.4NTBBBKEATlXSaXkQPpO2tCE5O38aETzpXpcevfgKL4';
-const { createClient } = supabase;
-const db = createClient(SUPA_URL, SUPA_KEY);
+const EJS_SERVICE = 'service_1uhqvvh';
+const EJS_TEMPLATE = 'template_qltc485';
+const EJS_PUBKEY = 'PbpxqMztyCKlZxg_6';
 
 // ── State ──
 let currentUser = null;
 let allRecords = [];
 let clockInterval = null;
 let timerInterval = null;
-let activeSession = null; // { startTime: ISO }
+let activeSession = null;
+let currentEntryMode = 'time';
+let currentEditMode = 'time';
 
 // ── Init ──
 window.addEventListener('load', async () => {
-  // Check local session
+  emailjs.init(EJS_PUBKEY);
   const saved = localStorage.getItem('att_user');
   if (saved) {
     try {
@@ -372,11 +396,9 @@ window.addEventListener('load', async () => {
       showScreen('appScreen');
       initApp();
     } catch { showScreen('authScreen'); }
-  } else {
-    showScreen('authScreen');
-  }
-  // Set today as default for manual entry
+  } else { showScreen('authScreen'); }
   document.getElementById('manDate').value = today();
+  document.getElementById('manDateH').value = today();
 });
 
 function today() { return new Date().toISOString().split('T')[0]; }
@@ -385,394 +407,402 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
 }
 
-// ── API helpers ──
-const headers = () => ({
-  'Content-Type': 'application/json',
-  'apikey': SUPA_KEY,
-  'Authorization': `Bearer ${SUPA_KEY}`,
-  'Prefer': 'return=representation'
-});
-
-async function apiGet(table, params = '') {
-  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${params}`, { headers: headers() });
+// ── API ──
+const hdrs = () => ({'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Prefer':'return=representation'});
+async function apiGet(table, params='') {
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?${params}`, {headers:hdrs()});
   return r.json();
 }
 async function apiPost(table, body) {
-  const r = await fetch(`${SUPA_URL}/rest/v1/${table}`, { method:'POST', headers: headers(), body: JSON.stringify(body) });
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}`, {method:'POST',headers:hdrs(),body:JSON.stringify(body)});
   return r.json();
 }
 async function apiPatch(table, id, body) {
-  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, { method:'PATCH', headers: headers(), body: JSON.stringify(body) });
+  const r = await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, {method:'PATCH',headers:hdrs(),body:JSON.stringify(body)});
   return r.json();
 }
 async function apiDelete(table, id) {
-  await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, { method:'DELETE', headers: headers() });
+  await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, {method:'DELETE',headers:hdrs()});
 }
 
-// ── Auth ──
+// ── Auth Helpers ──
+function hashPass(p) { return btoa(unescape(encodeURIComponent(p+'_salt2024att'))); }
+function showMsg(msg,type='error') {
+  const el=document.getElementById('authMsg');
+  el.textContent=msg; el.className=`auth-msg ${type}`; el.style.display='block';
+}
+function clearMsg() { document.getElementById('authMsg').style.display='none'; }
+
 function switchTab(tab) {
   clearMsg();
-  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (tab==='login'&&i===0)||(tab==='register'&&i===1)));
+  const tabs = ['login','register','forgot'];
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', tabs[i]===tab));
   document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
   document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
+  document.getElementById('forgotForm').style.display = tab==='forgot'?'block':'none';
 }
-
-function showMsg(msg, type='error') {
-  const el = document.getElementById('authMsg');
-  el.textContent = msg; el.className = `auth-msg ${type}`; el.style.display = 'block';
-}
-function clearMsg() { document.getElementById('authMsg').style.display = 'none'; }
-
-function hashPass(p) { return btoa(unescape(encodeURIComponent(p + '_salt2024att'))); }
 
 async function handleRegister() {
   clearMsg();
-  const name = document.getElementById('rName').value.trim();
-  const email = document.getElementById('rEmail').value.trim().toLowerCase();
-  const pass = document.getElementById('rPass').value;
-  const rate = parseFloat(document.getElementById('rRate').value) || 0;
-  if (!name) return showMsg('أدخل الاسم');
-  if (!email.includes('@')) return showMsg('البريد غير صالح');
-  if (pass.length < 6) return showMsg('كلمة المرور 6 أحرف على الأقل');
-  const btn = document.getElementById('registerBtn');
-  btn.disabled = true; btn.textContent = 'جاري التسجيل...';
+  const name=document.getElementById('rName').value.trim();
+  const email=document.getElementById('rEmail').value.trim().toLowerCase();
+  const pass=document.getElementById('rPass').value;
+  const rate=parseFloat(document.getElementById('rRate').value)||0;
+  if(!name) return showMsg('أدخل الاسم');
+  if(!email.includes('@')) return showMsg('البريد غير صالح');
+  if(pass.length<6) return showMsg('كلمة المرور 6 أحرف على الأقل');
+  const btn=document.getElementById('registerBtn');
+  btn.disabled=true; btn.textContent='جاري التسجيل...';
   try {
-    const existing = await apiGet('users', `email=eq.${email}&select=id`);
-    if (existing.length > 0) { showMsg('هذا البريد مسجل مسبقاً'); return; }
-    const result = await apiPost('users', { name, email, password: hashPass(pass), hourly_rate: rate });
-    if (result && result[0]) {
-      showMsg('تم إنشاء الحساب! سجل دخولك الآن', 'success');
-      switchTab('login');
-      document.getElementById('lEmail').value = email;
-    } else showMsg('خطأ في إنشاء الحساب، حاول مجدداً');
-  } catch(e) { showMsg('خطأ في الاتصال'); }
-  finally { btn.disabled = false; btn.textContent = 'إنشاء الحساب'; }
+    const ex=await apiGet('users',`email=eq.${email}&select=id`);
+    if(ex.length>0){showMsg('هذا البريد مسجل مسبقاً');return;}
+    const result=await apiPost('users',{name,email,password:hashPass(pass),hourly_rate:rate});
+    if(result&&result[0]){showMsg('تم إنشاء الحساب! سجل دخولك','success');switchTab('login');document.getElementById('lEmail').value=email;}
+    else showMsg('خطأ في الإنشاء، حاول مجدداً');
+  } catch{showMsg('خطأ في الاتصال');}
+  finally{btn.disabled=false;btn.textContent='إنشاء الحساب';}
 }
 
 async function handleLogin() {
   clearMsg();
-  const email = document.getElementById('lEmail').value.trim().toLowerCase();
-  const pass = document.getElementById('lPass').value;
-  if (!email || !pass) return showMsg('أكمل جميع الحقول');
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true; btn.textContent = 'جاري الدخول...';
+  const email=document.getElementById('lEmail').value.trim().toLowerCase();
+  const pass=document.getElementById('lPass').value;
+  if(!email||!pass) return showMsg('أكمل جميع الحقول');
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true; btn.textContent='جاري الدخول...';
   try {
-    const users = await apiGet('users', `email=eq.${email}&password=eq.${hashPass(pass)}&select=*`);
-    if (!users || users.length === 0) { showMsg('البريد أو كلمة المرور غير صحيحة'); return; }
-    currentUser = users[0];
-    localStorage.setItem('att_user', JSON.stringify(currentUser));
+    const users=await apiGet('users',`email=eq.${email}&password=eq.${hashPass(pass)}&select=*`);
+    if(!users||users.length===0){showMsg('البريد أو كلمة المرور غير صحيحة');return;}
+    currentUser=users[0];
+    localStorage.setItem('att_user',JSON.stringify(currentUser));
     await loadRecords();
     showScreen('appScreen');
     initApp();
-  } catch(e) { showMsg('خطأ في الاتصال'); }
-  finally { btn.disabled = false; btn.textContent = 'دخول'; }
+  } catch{showMsg('خطأ في الاتصال');}
+  finally{btn.disabled=false;btn.textContent='دخول';}
+}
+
+async function handleForgot() {
+  clearMsg();
+  const email=document.getElementById('fEmail').value.trim().toLowerCase();
+  if(!email.includes('@')) return showMsg('أدخل بريد إلكتروني صحيح');
+  const btn=document.getElementById('forgotBtn');
+  btn.disabled=true; btn.textContent='جاري الإرسال...';
+  try {
+    const users=await apiGet('users',`email=eq.${email}&select=*`);
+    if(!users||users.length===0){showMsg('هذا البريد غير مسجل');return;}
+    const user=users[0];
+    // Generate temp password
+    const tempPass='Att'+Math.floor(Math.random()*9000+1000);
+    await apiPatch('users',user.id,{password:hashPass(tempPass)});
+    await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+      to_email: email,
+      to_name: user.name,
+      password: tempPass
+    });
+    showMsg('✅ تم إرسال كلمة المرور الجديدة على بريدك!','success');
+    document.getElementById('fEmail').value='';
+  } catch(e){showMsg('خطأ في الإرسال، تأكد من الإيميل');}
+  finally{btn.disabled=false;btn.textContent='📧 إرسال كلمة المرور';}
 }
 
 function handleLogout() {
-  currentUser = null;
-  allRecords = [];
-  activeSession = null;
+  if(currentUser) localStorage.removeItem('att_sess_'+currentUser.id);
+  currentUser=null; allRecords=[]; activeSession=null;
   localStorage.removeItem('att_user');
-  localStorage.removeItem('att_session_' + (currentUser?.id || ''));
   clearInterval(clockInterval); clearInterval(timerInterval);
   showScreen('authScreen');
 }
 
-// ── App Init ──
+// ── App ──
 function initApp() {
-  document.getElementById('welcomeName').textContent = currentUser.name;
-  document.getElementById('salRate').value = currentUser.hourly_rate || '';
-  startClock();
-  checkSession();
-  renderAll();
+  document.getElementById('welcomeName').textContent=currentUser.name;
+  document.getElementById('salRate').value=currentUser.hourly_rate||'';
+  startClock(); checkSession(); renderAll();
 }
 
 function startClock() {
   clearInterval(clockInterval);
-  const upd = () => {
-    const n = new Date();
-    document.getElementById('liveDate').textContent = n.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long'});
-    document.getElementById('liveTime').textContent = n.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const upd=()=>{
+    const n=new Date();
+    document.getElementById('liveDate').textContent=n.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long'});
+    document.getElementById('liveTime').textContent=n.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   };
-  upd(); clockInterval = setInterval(upd, 1000);
+  upd(); clockInterval=setInterval(upd,1000);
 }
 
 // ── Records ──
 async function loadRecords() {
   try {
-    allRecords = await apiGet('time_records', `user_id=eq.${currentUser.id}&order=date.desc,check_in.desc&select=*`);
-    if (!Array.isArray(allRecords)) allRecords = [];
-  } catch { allRecords = []; }
+    allRecords=await apiGet('time_records',`user_id=eq.${currentUser.id}&order=date.desc,check_in.desc&select=*`);
+    if(!Array.isArray(allRecords)) allRecords=[];
+  } catch{allRecords=[];}
 }
 
-function renderAll() {
-  renderStats();
-  renderHistory();
-  calcSalary();
-}
+function renderAll() { renderStats(); renderHistory(); calcSalary(); }
 
 function renderStats() {
-  const total = allRecords.reduce((s,r) => s + parseFloat(r.hours), 0);
-  document.getElementById('statHours').textContent = total.toFixed(1);
-  document.getElementById('statDays').textContent = allRecords.length;
-  document.getElementById('salHours').value = total.toFixed(2);
+  const total=allRecords.reduce((s,r)=>s+parseFloat(r.hours),0);
+  document.getElementById('statHours').textContent=total.toFixed(1);
+  document.getElementById('statDays').textContent=allRecords.length;
+  document.getElementById('salHours').value=total.toFixed(2);
 }
 
-function renderHistory(records = allRecords, containerId = 'recordsContainer') {
-  const container = document.getElementById(containerId);
-  if (!records.length) {
-    container.innerHTML = '<div class="empty-state"><div class="ei">📭</div><p>لا توجد سجلات</p></div>';
-    return;
-  }
-  const rows = records.map(r => {
-    const ci = r.check_in ? r.check_in.slice(0,5) : '—';
-    const co = r.check_out ? r.check_out.slice(0,5) : '—';
-    const hrs = parseFloat(r.hours).toFixed(1);
-    const dateAr = new Date(r.date + 'T00:00:00').toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'});
+function renderHistory(records=allRecords,containerId='recordsContainer') {
+  const container=document.getElementById(containerId);
+  if(!records.length){container.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>لا توجد سجلات</p></div>';return;}
+  const rows=records.map(r=>{
+    const ci=r.check_in?r.check_in.slice(0,5):'—';
+    const co=r.check_out?r.check_out.slice(0,5):'—';
+    const hrs=parseFloat(r.hours).toFixed(1);
+    const dateAr=new Date(r.date+'T00:00:00').toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'});
+    const note=r.note?`<br><small style="color:var(--text-muted)">${r.note}</small>`:'';
     return `<tr>
-      <td>${dateAr}</td>
-      <td>${ci}</td>
-      <td>${co}</td>
+      <td>${dateAr}${note}</td>
+      <td>${ci}</td><td>${co}</td>
       <td><span class="hours-badge">${hrs}س</span></td>
-      <td>
-        <div class="action-btns">
-          <button class="btn-edit" onclick="openEdit('${r.id}')">تعديل</button>
-          <button class="btn-del" onclick="deleteRecord('${r.id}')">حذف</button>
-        </div>
-      </td>
+      <td><div class="action-btns">
+        <button class="btn-edit" onclick="openEdit('${r.id}')">تعديل</button>
+        <button class="btn-del" onclick="deleteRecord('${r.id}')">حذف</button>
+      </div></td>
     </tr>`;
   }).join('');
-  container.innerHTML = `<table class="history-table">
+  container.innerHTML=`<table class="history-table">
     <thead><tr><th>التاريخ</th><th>حضور</th><th>انصراف</th><th>الساعات</th><th></th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+    <tbody>${rows}</tbody></table>`;
 }
 
-// ── Clock In/Out ──
+// ── Mode Toggle ──
+function switchMode(mode) {
+  currentEntryMode=mode;
+  document.getElementById('modeTimeBtn').classList.toggle('active',mode==='time');
+  document.getElementById('modeHoursBtn').classList.toggle('active',mode==='hours');
+  document.getElementById('timeModeFields').style.display=mode==='time'?'block':'none';
+  document.getElementById('hoursModeFields').style.display=mode==='hours'?'block':'none';
+}
+function switchEditMode(mode) {
+  currentEditMode=mode;
+  document.getElementById('editModeTimeBtn').classList.toggle('active',mode==='time');
+  document.getElementById('editModeHoursBtn').classList.toggle('active',mode==='hours');
+  document.getElementById('editTimeFields').style.display=mode==='time'?'block':'none';
+  document.getElementById('editHoursFields').style.display=mode==='hours'?'block':'none';
+}
+
+// ── Clock ──
 function checkSession() {
-  const key = 'att_sess_' + currentUser.id;
-  const saved = localStorage.getItem(key);
-  if (saved) {
-    activeSession = JSON.parse(saved);
-    setCheckoutMode(activeSession.startTime);
-  } else {
-    setCheckinMode();
-  }
+  const key='att_sess_'+currentUser.id;
+  const saved=localStorage.getItem(key);
+  if(saved){activeSession=JSON.parse(saved);setCheckoutMode(activeSession.startTime);}
+  else setCheckinMode();
 }
-
 function setCheckinMode() {
-  const btn = document.getElementById('mainBtn');
-  btn.className = 'clock-btn checkin';
-  btn.innerHTML = '<span class="ci">▶</span><span class="ct">بدء العمل<br>(حضور)</span>';
-  document.getElementById('sessionBadge').textContent = 'لا توجد جلسة نشطة';
-  document.getElementById('sessionBadge').className = 'session-badge';
+  const btn=document.getElementById('mainBtn');
+  btn.className='clock-btn checkin';
+  btn.innerHTML='<span class="ci">▶</span><span class="ct">بدء العمل<br>(حضور)</span>';
+  document.getElementById('sessionBadge').textContent='لا توجد جلسة نشطة';
+  document.getElementById('sessionBadge').className='session-badge';
   document.getElementById('sessionTimer').classList.remove('on');
   document.getElementById('checkinInfo').classList.remove('on');
   clearInterval(timerInterval);
 }
-
 function setCheckoutMode(startTime) {
-  const btn = document.getElementById('mainBtn');
-  btn.className = 'clock-btn checkout';
-  btn.innerHTML = '<span class="ci">⏹</span><span class="ct">إنهاء العمل<br>(انصراف)</span>';
-  document.getElementById('sessionBadge').textContent = '● جلسة نشطة الآن';
-  document.getElementById('sessionBadge').className = 'session-badge on';
-  const st = new Date(startTime);
-  document.getElementById('checkinTimeShow').textContent = st.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+  const btn=document.getElementById('mainBtn');
+  btn.className='clock-btn checkout';
+  btn.innerHTML='<span class="ci">⏹</span><span class="ct">إنهاء العمل<br>(انصراف)</span>';
+  document.getElementById('sessionBadge').textContent='● جلسة نشطة الآن';
+  document.getElementById('sessionBadge').className='session-badge on';
+  const st=new Date(startTime);
+  document.getElementById('checkinTimeShow').textContent=st.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('checkinInfo').classList.add('on');
   document.getElementById('sessionTimer').classList.add('on');
   clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    const el = Math.floor((Date.now() - new Date(startTime)) / 1000);
-    const h = String(Math.floor(el/3600)).padStart(2,'0');
-    const m = String(Math.floor((el%3600)/60)).padStart(2,'0');
-    const s = String(el%60).padStart(2,'0');
-    document.getElementById('timerVal').textContent = `${h}:${m}:${s}`;
-  }, 1000);
+  timerInterval=setInterval(()=>{
+    const el=Math.floor((Date.now()-new Date(startTime))/1000);
+    const h=String(Math.floor(el/3600)).padStart(2,'0');
+    const m=String(Math.floor((el%3600)/60)).padStart(2,'0');
+    const s=String(el%60).padStart(2,'0');
+    document.getElementById('timerVal').textContent=`${h}:${m}:${s}`;
+  },1000);
 }
-
 async function handleClock() {
-  const key = 'att_sess_' + currentUser.id;
-  if (!activeSession) {
-    // Check in
-    const now = new Date().toISOString();
-    activeSession = { startTime: now };
-    localStorage.setItem(key, JSON.stringify(activeSession));
+  const key='att_sess_'+currentUser.id;
+  if(!activeSession){
+    const now=new Date().toISOString();
+    activeSession={startTime:now};
+    localStorage.setItem(key,JSON.stringify(activeSession));
     setCheckoutMode(now);
-    showToast('تم تسجيل الحضور ✅', 'success');
+    showToast('تم تسجيل الحضور ✅','success');
   } else {
-    // Check out
-    const start = new Date(activeSession.startTime);
-    const end = new Date();
-    const hours = (end - start) / 3600000;
-    if (hours < 0.01) { showToast('مدة العمل قصيرة جداً!', 'error'); return; }
-    const btn = document.getElementById('mainBtn');
-    btn.disabled = true;
+    const start=new Date(activeSession.startTime);
+    const end=new Date();
+    const hours=(end-start)/3600000;
+    if(hours<0.01){showToast('مدة العمل قصيرة جداً!','error');return;}
+    const btn=document.getElementById('mainBtn');
+    btn.disabled=true;
     try {
-      await saveRecord({
-        date: start.toISOString().split('T')[0],
-        check_in: start.toTimeString().slice(0,8),
-        check_out: end.toTimeString().slice(0,8),
-        hours: parseFloat(hours.toFixed(4)),
-        note: ''
-      });
+      await saveRecord({date:start.toISOString().split('T')[0],check_in:start.toTimeString().slice(0,8),check_out:end.toTimeString().slice(0,8),hours:parseFloat(hours.toFixed(4)),note:''});
       localStorage.removeItem(key);
-      activeSession = null;
+      activeSession=null;
       setCheckinMode();
-      showToast(`تم الانصراف ✅ عملت ${hours.toFixed(1)} ساعة`, 'success');
-    } catch { showToast('خطأ في الحفظ', 'error'); }
-    finally { btn.disabled = false; }
+      showToast(`تم الانصراف ✅ عملت ${hours.toFixed(1)} ساعة`,'success');
+    } catch{showToast('خطأ في الحفظ','error');}
+    finally{btn.disabled=false;}
   }
 }
 
-// ── Manual Entry ──
+// ── Manual Add ──
 async function handleManualAdd() {
-  const date = document.getElementById('manDate').value;
-  const inT = document.getElementById('manIn').value;
-  const outT = document.getElementById('manOut').value;
-  const note = document.getElementById('manNote').value.trim();
-  if (!date || !inT || !outT) { showToast('أكمل التاريخ والوقت', 'error'); return; }
-  const start = new Date(`${date}T${inT}`);
-  const end = new Date(`${date}T${outT}`);
-  let hours = (end - start) / 3600000;
-  if (hours <= 0) hours += 24; // عبر منتصف الليل
-  if (hours > 24) { showToast('الفارق الزمني غير صحيح', 'error'); return; }
-  const btn = document.getElementById('addBtn');
-  btn.disabled = true; btn.textContent = 'جاري الإضافة...';
+  let date,hours,checkIn='00:00:00',checkOut='00:00:00';
+  if(currentEntryMode==='time'){
+    date=document.getElementById('manDate').value;
+    const inT=document.getElementById('manIn').value;
+    const outT=document.getElementById('manOut').value;
+    if(!date||!inT||!outT){showToast('أكمل التاريخ والوقت','error');return;}
+    const start=new Date(`${date}T${inT}`);
+    const end=new Date(`${date}T${outT}`);
+    hours=(end-start)/3600000;
+    if(hours<=0) hours+=24;
+    checkIn=inT+':00'; checkOut=outT+':00';
+  } else {
+    date=document.getElementById('manDateH').value;
+    hours=parseFloat(document.getElementById('manHours').value);
+    if(!date||!hours||hours<=0){showToast('أدخل التاريخ وعدد الساعات','error');return;}
+  }
+  if(hours>24){showToast('الساعات غير صحيحة','error');return;}
+  const note=document.getElementById('manNote').value.trim();
+  const btn=document.getElementById('addBtn');
+  btn.disabled=true; btn.textContent='جاري الإضافة...';
   try {
-    await saveRecord({ date, check_in: inT+':00', check_out: outT+':00', hours: parseFloat(hours.toFixed(4)), note });
-    document.getElementById('manIn').value = '';
-    document.getElementById('manOut').value = '';
-    document.getElementById('manNote').value = '';
-    showToast(`✅ تم إضافة ${hours.toFixed(1)} ساعة`, 'success');
-  } catch { showToast('خطأ في الإضافة', 'error'); }
-  finally { btn.disabled = false; btn.textContent = '➕ إضافة السجل'; }
+    await saveRecord({date,check_in:checkIn,check_out:checkOut,hours:parseFloat(hours.toFixed(4)),note});
+    document.getElementById('manIn').value='';
+    document.getElementById('manOut').value='';
+    document.getElementById('manHours').value='';
+    document.getElementById('manNote').value='';
+    showToast(`✅ تم إضافة ${hours.toFixed(1)} ساعة`,'success');
+  } catch{showToast('خطأ في الإضافة','error');}
+  finally{btn.disabled=false;btn.textContent='➕ إضافة السجل';}
 }
 
 async function saveRecord(data) {
-  const rec = { user_id: currentUser.id, ...data };
-  const result = await apiPost('time_records', rec);
-  if (result && result[0]) {
+  const rec={user_id:currentUser.id,...data};
+  const result=await apiPost('time_records',rec);
+  if(result&&result[0]){
     allRecords.unshift(result[0]);
-    allRecords.sort((a,b) => b.date.localeCompare(a.date));
-    renderAll();
-    renderHistory();
+    allRecords.sort((a,b)=>b.date.localeCompare(a.date));
+    renderAll(); renderHistory();
   }
 }
 
 // ── Edit ──
 function openEdit(id) {
-  const r = allRecords.find(x => x.id === id);
-  if (!r) return;
-  document.getElementById('editId').value = id;
-  document.getElementById('editDate').value = r.date;
-  document.getElementById('editIn').value = r.check_in ? r.check_in.slice(0,5) : '';
-  document.getElementById('editOut').value = r.check_out ? r.check_out.slice(0,5) : '';
-  document.getElementById('editNote').value = r.note || '';
+  const r=allRecords.find(x=>x.id===id);
+  if(!r) return;
+  document.getElementById('editId').value=id;
+  document.getElementById('editDate').value=r.date;
+  document.getElementById('editDateH').value=r.date;
+  document.getElementById('editIn').value=r.check_in?r.check_in.slice(0,5):'';
+  document.getElementById('editOut').value=r.check_out?r.check_out.slice(0,5):'';
+  document.getElementById('editHours').value=parseFloat(r.hours).toFixed(2);
+  document.getElementById('editNote').value=r.note||'';
+  switchEditMode('time');
   document.getElementById('editModal').classList.add('show');
 }
-
-function closeModal() { document.getElementById('editModal').classList.remove('show'); }
+function closeModal(){document.getElementById('editModal').classList.remove('show');}
 
 async function saveEdit() {
-  const id = document.getElementById('editId').value;
-  const date = document.getElementById('editDate').value;
-  const inT = document.getElementById('editIn').value;
-  const outT = document.getElementById('editOut').value;
-  const note = document.getElementById('editNote').value.trim();
-  if (!date || !inT || !outT) { showToast('أكمل البيانات', 'error'); return; }
-  const start = new Date(`${date}T${inT}`);
-  const end = new Date(`${date}T${outT}`);
-  let hours = (end - start) / 3600000;
-  if (hours <= 0) hours += 24;
+  const id=document.getElementById('editId').value;
+  const note=document.getElementById('editNote').value.trim();
+  let date,hours,checkIn='00:00:00',checkOut='00:00:00';
+  if(currentEditMode==='time'){
+    date=document.getElementById('editDate').value;
+    const inT=document.getElementById('editIn').value;
+    const outT=document.getElementById('editOut').value;
+    if(!date||!inT||!outT){showToast('أكمل البيانات','error');return;}
+    const start=new Date(`${date}T${inT}`);
+    const end=new Date(`${date}T${outT}`);
+    hours=(end-start)/3600000;
+    if(hours<=0) hours+=24;
+    checkIn=inT+':00'; checkOut=outT+':00';
+  } else {
+    date=document.getElementById('editDateH').value;
+    hours=parseFloat(document.getElementById('editHours').value);
+    if(!date||!hours||hours<=0){showToast('أدخل البيانات','error');return;}
+  }
   try {
-    await apiPatch('time_records', id, { date, check_in: inT+':00', check_out: outT+':00', hours: parseFloat(hours.toFixed(4)), note });
-    const idx = allRecords.findIndex(r => r.id === id);
-    if (idx !== -1) allRecords[idx] = { ...allRecords[idx], date, check_in: inT+':00', check_out: outT+':00', hours: parseFloat(hours.toFixed(4)), note };
+    await apiPatch('time_records',id,{date,check_in:checkIn,check_out:checkOut,hours:parseFloat(hours.toFixed(4)),note});
+    const idx=allRecords.findIndex(r=>r.id===id);
+    if(idx!==-1) allRecords[idx]={...allRecords[idx],date,check_in:checkIn,check_out:checkOut,hours:parseFloat(hours.toFixed(4)),note};
     renderAll(); renderHistory(); closeModal();
-    showToast('✅ تم التعديل بنجاح', 'success');
-  } catch { showToast('خطأ في التعديل', 'error'); }
+    showToast('✅ تم التعديل بنجاح','success');
+  } catch{showToast('خطأ في التعديل','error');}
 }
 
 async function deleteRecord(id) {
-  if (!confirm('هل تريد حذف هذا السجل؟')) return;
+  if(!confirm('هل تريد حذف هذا السجل؟')) return;
   try {
-    await apiDelete('time_records', id);
-    allRecords = allRecords.filter(r => r.id !== id);
+    await apiDelete('time_records',id);
+    allRecords=allRecords.filter(r=>r.id!==id);
     renderAll(); renderHistory();
-    showToast('تم الحذف', 'success');
-  } catch { showToast('خطأ في الحذف', 'error'); }
+    showToast('تم الحذف','success');
+  } catch{showToast('خطأ في الحذف','error');}
 }
 
 // ── Salary ──
 function calcSalary() {
-  const from = document.getElementById('fromDate').value;
-  const to = document.getElementById('toDate').value;
-  let filtered = allRecords;
-  if (from) filtered = filtered.filter(r => r.date >= from);
-  if (to) filtered = filtered.filter(r => r.date <= to);
-  const total = filtered.reduce((s,r) => s + parseFloat(r.hours), 0);
-  const rate = parseFloat(document.getElementById('salRate').value) || 0;
-  document.getElementById('salHours').value = total.toFixed(2);
-  document.getElementById('salResult').textContent = (total * rate).toFixed(2);
+  const from=document.getElementById('fromDate').value;
+  const to=document.getElementById('toDate').value;
+  let filtered=allRecords;
+  if(from) filtered=filtered.filter(r=>r.date>=from);
+  if(to) filtered=filtered.filter(r=>r.date<=to);
+  const total=filtered.reduce((s,r)=>s+parseFloat(r.hours),0);
+  const rate=parseFloat(document.getElementById('salRate').value)||0;
+  document.getElementById('salHours').value=total.toFixed(2);
+  document.getElementById('salResult').textContent=(total*rate).toFixed(2);
   renderSalaryBreakdown(filtered);
 }
-
 function renderSalaryBreakdown(records) {
-  const el = document.getElementById('salaryBreakdown');
-  if (!records.length) { el.innerHTML = '<div class="empty-state"><div class="ei">📊</div><p>لا توجد بيانات</p></div>'; return; }
-  const rate = parseFloat(document.getElementById('salRate').value) || 0;
-  const rows = records.map(r => {
-    const hrs = parseFloat(r.hours).toFixed(1);
-    const sal = (parseFloat(r.hours) * rate).toFixed(0);
-    const dateAr = new Date(r.date+'T00:00:00').toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'});
+  const el=document.getElementById('salaryBreakdown');
+  if(!records.length){el.innerHTML='<div class="empty-state"><div class="ei">📊</div><p>لا توجد بيانات</p></div>';return;}
+  const rate=parseFloat(document.getElementById('salRate').value)||0;
+  const rows=records.map(r=>{
+    const hrs=parseFloat(r.hours).toFixed(1);
+    const sal=(parseFloat(r.hours)*rate).toFixed(0);
+    const dateAr=new Date(r.date+'T00:00:00').toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'});
     return `<tr><td>${dateAr}</td><td>${hrs}س</td><td>${sal} ج</td></tr>`;
   }).join('');
-  el.innerHTML = `<table class="history-table">
-    <thead><tr><th>اليوم</th><th>الساعات</th><th>الأجر</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
+  el.innerHTML=`<table class="history-table"><thead><tr><th>اليوم</th><th>الساعات</th><th>الأجر</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
-
-function resetPeriod() {
-  document.getElementById('fromDate').value = '';
-  document.getElementById('toDate').value = '';
-  calcSalary();
-}
-
-async function saveRate() {
-  const rate = parseFloat(document.getElementById('salRate').value) || 0;
-  if (!currentUser) return;
-  try {
-    await apiPatch('users', currentUser.id, { hourly_rate: rate });
-    currentUser.hourly_rate = rate;
-    localStorage.setItem('att_user', JSON.stringify(currentUser));
-  } catch {}
+function resetPeriod(){document.getElementById('fromDate').value='';document.getElementById('toDate').value='';calcSalary();}
+async function saveRate(){
+  const rate=parseFloat(document.getElementById('salRate').value)||0;
+  if(!currentUser) return;
+  try{await apiPatch('users',currentUser.id,{hourly_rate:rate});currentUser.hourly_rate=rate;localStorage.setItem('att_user',JSON.stringify(currentUser));}catch{}
 }
 
 // ── Navigation ──
-function switchPage(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById(page + 'Page').classList.add('active');
-  const idx = ['home','records','salary'].indexOf(page);
+function switchPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(page+'Page').classList.add('active');
+  const idx=['home','records','salary'].indexOf(page);
   document.querySelectorAll('.nav-tab')[idx].classList.add('active');
-  if (page === 'records') renderHistory(allRecords, 'recordsContainer');
-  if (page === 'salary') calcSalary();
+  if(page==='records') renderHistory(allRecords,'recordsContainer');
+  if(page==='salary') calcSalary();
 }
 
 // ── Toast ──
-function showToast(msg, type='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = `toast ${type} show`;
-  setTimeout(() => t.classList.remove('show'), 2800);
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-// ── Enter key ──
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('authScreen').classList.contains('active')) {
-    if (document.getElementById('loginForm').style.display !== 'none') handleLogin();
-    else handleRegister();
+// Enter key
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('authScreen').classList.contains('active')){
+    if(document.getElementById('loginForm').style.display!=='none') handleLogin();
+    else if(document.getElementById('registerForm').style.display!=='none') handleRegister();
+    else handleForgot();
   }
 });
 </script>
