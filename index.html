@@ -177,6 +177,12 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
   .salary-calc-grid{grid-template-columns:1fr;}
   .period-row{grid-template-columns:1fr;}
 }
+.profile-btn{position:absolute;top:16px;left:16px;background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.35);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;transition:all 0.2s;}
+.profile-btn:hover{background:rgba(255,255,255,0.35);}
+.profile-section{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.profile-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.profile-section h4{font-size:12px;font-weight:800;color:var(--text-muted);margin-bottom:10px;}
+.profile-email-box{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 13px;font-size:14px;color:var(--text-muted);direction:ltr;text-align:left;}
 </style>
 </head>
 <body>
@@ -246,6 +252,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
   <!-- Home -->
   <div id="homePage" class="page active">
     <div class="welcome-card">
+      <button class="profile-btn" onclick="openProfile()" title="بيانات الحساب">👤</button>
       <div class="welcome-text">أهلاً وسهلاً،</div>
       <div class="welcome-name" id="welcomeName">—</div>
       <div class="datetime-row">
@@ -396,6 +403,52 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
       <button class="btn-save" onclick="saveEdit()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal-box">
+    <div class="modal-title">👤 بيانات الحساب</div>
+
+    <div class="profile-section">
+      <h4>البريد الإلكتروني</h4>
+      <div class="profile-email-box" id="profileEmail">—</div>
+    </div>
+
+    <div class="profile-section">
+      <h4>الاسم</h4>
+      <div class="manual-field">
+        <input type="text" id="profileName" placeholder="الاسم الكامل" style="width:100%;direction:rtl;text-align:right">
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <h4>سعر ساعة العمل (جنيه)</h4>
+      <div class="manual-field">
+        <input type="number" id="profileRate" placeholder="0" min="0">
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <h4>تغيير كلمة المرور</h4>
+      <div class="manual-field" style="margin-bottom:10px">
+        <input type="password" id="profileOldPass" placeholder="كلمة المرور الحالية">
+      </div>
+      <div class="manual-field" style="margin-bottom:10px">
+        <input type="password" id="profileNewPass" placeholder="كلمة المرور الجديدة">
+      </div>
+      <div class="manual-field">
+        <input type="password" id="profileConfirmPass" placeholder="تأكيد كلمة المرور الجديدة">
+      </div>
+    </div>
+
+    <div id="profileMsg" class="auth-msg" style="margin-top:10px"></div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeProfileModal()">إغلاق</button>
+      <button class="btn-save" onclick="saveProfile()">💾 حفظ</button>
     </div>
   </div>
 </div>
@@ -576,8 +629,9 @@ function renderAll() { renderStats(); renderHistory(); calcSalary(); }
 
 function renderStats() {
   const total=allRecords.reduce((s,r)=>s+parseFloat(r.hours),0);
+  const uniqueDays=new Set(allRecords.map(r=>r.date)).size;
   document.getElementById('statHours').textContent=total.toFixed(1);
-  document.getElementById('statDays').textContent=allRecords.length;
+  document.getElementById('statDays').textContent=uniqueDays;
   document.getElementById('salHours').value=total.toFixed(2);
 }
 
@@ -824,6 +878,53 @@ async function saveRate(){
   const rate=parseFloat(document.getElementById('salRate').value)||0;
   if(!currentUser) return;
   try{await apiPatch('users',currentUser.id,{hourly_rate:rate});currentUser.hourly_rate=rate;localStorage.setItem('att_user',JSON.stringify(currentUser));}catch{}
+}
+
+// ── Profile ──
+function openProfile() {
+  document.getElementById('profileEmail').textContent = currentUser.email;
+  document.getElementById('profileName').value = currentUser.name;
+  document.getElementById('profileRate').value = currentUser.hourly_rate || '';
+  document.getElementById('profileOldPass').value = '';
+  document.getElementById('profileNewPass').value = '';
+  document.getElementById('profileConfirmPass').value = '';
+  document.getElementById('profileMsg').style.display = 'none';
+  document.getElementById('profileModal').classList.add('show');
+}
+function closeProfileModal() { document.getElementById('profileModal').classList.remove('show'); }
+
+async function saveProfile() {
+  const name = document.getElementById('profileName').value.trim();
+  const rate = parseFloat(document.getElementById('profileRate').value) || 0;
+  const oldPass = document.getElementById('profileOldPass').value;
+  const newPass = document.getElementById('profileNewPass').value;
+  const confirmPass = document.getElementById('profileConfirmPass').value;
+  const msgEl = document.getElementById('profileMsg');
+  const showPMsg = (m, t='error') => { msgEl.textContent=m; msgEl.className=`auth-msg ${t}`; msgEl.style.display='block'; };
+
+  if (!name) return showPMsg('أدخل الاسم');
+
+  let updates = { name, hourly_rate: rate };
+
+  // Change password if filled
+  if (oldPass || newPass || confirmPass) {
+    if (hashPass(oldPass) !== currentUser.password) return showPMsg('كلمة المرور الحالية غير صحيحة');
+    if (newPass.length < 6) return showPMsg('كلمة المرور الجديدة 6 أحرف على الأقل');
+    if (newPass !== confirmPass) return showPMsg('كلمتا المرور غير متطابقتين');
+    updates.password = hashPass(newPass);
+  }
+
+  try {
+    await apiPatch('users', currentUser.id, updates);
+    Object.assign(currentUser, updates);
+    localStorage.setItem('att_user', JSON.stringify(currentUser));
+    document.getElementById('welcomeName').textContent = currentUser.name;
+    document.getElementById('salRate').value = currentUser.hourly_rate || '';
+    showPMsg('✅ تم الحفظ بنجاح', 'success');
+    document.getElementById('profileOldPass').value = '';
+    document.getElementById('profileNewPass').value = '';
+    document.getElementById('profileConfirmPass').value = '';
+  } catch { showPMsg('خطأ في الحفظ، حاول تاني'); }
 }
 
 // ── Records Filter ──
