@@ -180,7 +180,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
 </style>
 </head>
 <body>
- 
+
 <!-- Loading -->
 <div id="loadingScreen" class="screen active">
   <div class="loader-box">
@@ -190,7 +190,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="spinner"></div>
   </div>
 </div>
- 
+
 <!-- Auth -->
 <div id="authScreen" class="screen">
   <div class="auth-card">
@@ -205,14 +205,14 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
       <button class="auth-tab" onclick="switchTab('forgot')">نسيت كلمة المرور؟</button>
     </div>
     <div id="authMsg" class="auth-msg"></div>
- 
+
     <!-- Login -->
     <div id="loginForm">
       <div class="form-group"><label>البريد الإلكتروني</label><input type="email" id="lEmail" placeholder="example@email.com"></div>
       <div class="form-group"><label>كلمة المرور</label><input type="password" id="lPass" placeholder="••••••••"></div>
       <button class="btn-primary" id="loginBtn" onclick="handleLogin()">دخول</button>
     </div>
- 
+
     <!-- Register -->
     <div id="registerForm" style="display:none">
       <div class="form-group"><label>الاسم الكامل</label><input type="text" id="rName" placeholder="محمد أحمد"></div>
@@ -221,7 +221,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="form-group"><label>سعر ساعة العمل (جنيه)</label><input type="number" id="rRate" placeholder="50" min="0"></div>
       <button class="btn-primary" id="registerBtn" onclick="handleRegister()">إنشاء الحساب</button>
     </div>
- 
+
     <!-- Forgot Password -->
     <div id="forgotForm" style="display:none">
       <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">أدخل بريدك الإلكتروني وهنبعتلك كلمة المرور الحالية على إيميلك.</p>
@@ -230,7 +230,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
   </div>
 </div>
- 
+
 <!-- App -->
 <div id="appScreen" class="screen">
   <div class="topbar">
@@ -242,7 +242,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
     <button class="nav-tab" onclick="switchPage('records')">📋 السجلات</button>
     <button class="nav-tab" onclick="switchPage('salary')">💰 الراتب</button>
   </div>
- 
+
   <!-- Home -->
   <div id="homePage" class="page active">
     <div class="welcome-card">
@@ -253,7 +253,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
         <div class="dt-badge" id="liveTime">—</div>
       </div>
     </div>
- 
+
     <div class="clock-card">
       <div class="session-badge" id="sessionBadge">لا توجد جلسة نشطة</div><br>
       <button class="clock-btn checkin" id="mainBtn" onclick="handleClock()">
@@ -266,22 +266,22 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
         <div class="timer-val" id="timerVal">00:00:00</div>
       </div>
     </div>
- 
+
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-val" id="statHours">0</div><div class="stat-lbl">إجمالي الساعات</div></div>
       <div class="stat-card"><div class="stat-val" id="statDays">0</div><div class="stat-lbl">أيام العمل</div></div>
     </div>
- 
+
     <!-- Manual Entry -->
     <div class="card">
       <div class="card-title"><span class="ic">✏️</span> إضافة سجل يدوياً</div>
- 
+
       <!-- Mode Toggle -->
       <div class="mode-toggle">
         <button class="mode-btn active" id="modeTimeBtn" onclick="switchMode('time')">⏰ من/إلى ساعة</button>
         <button class="mode-btn" id="modeHoursBtn" onclick="switchMode('hours')">🔢 عدد الساعات مباشرة</button>
       </div>
- 
+
       <!-- Time Mode -->
       <div id="timeModeFields">
         <div class="manual-grid">
@@ -290,7 +290,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
           <div class="manual-field"><label>إلى الساعة</label><input type="time" id="manOut"></div>
         </div>
       </div>
- 
+
       <!-- Hours Mode -->
       <div id="hoursModeFields" style="display:none">
         <div class="manual-grid two">
@@ -298,14 +298,14 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
           <div class="manual-field"><label>عدد الساعات</label><input type="number" id="manHours" placeholder="8.5" step="0.25" min="0.25" max="24"></div>
         </div>
       </div>
- 
+
       <div class="manual-grid full" style="margin-bottom:12px">
         <div class="manual-field"><label>ملاحظة (اختياري)</label><input type="text" id="manNote" placeholder="مثال: ورديه مسائية"></div>
       </div>
       <button class="btn-add" id="addBtn" onclick="handleManualAdd()">➕ إضافة السجل</button>
     </div>
   </div>
- 
+
   <!-- Records -->
   <div id="recordsPage" class="page">
     <div class="card">
@@ -333,7 +333,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
       <div id="recordsContainer"><div class="empty-state"><div class="ei">📭</div><p>لا توجد سجلات بعد</p></div></div>
     </div>
   </div>
- 
+
   <!-- Salary -->
   <div id="salaryPage" class="page">
     <div class="card">
@@ -362,18 +362,18 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
   </div>
 </div>
- 
+
 <!-- Edit Modal -->
 <div class="modal-overlay" id="editModal">
   <div class="modal-box">
     <div class="modal-title">✏️ تعديل السجل</div>
     <input type="hidden" id="editId">
- 
+
     <div class="mode-toggle" style="margin-bottom:14px">
       <button class="mode-btn active" id="editModeTimeBtn" onclick="switchEditMode('time')">⏰ من/إلى ساعة</button>
       <button class="mode-btn" id="editModeHoursBtn" onclick="switchEditMode('hours')">🔢 عدد الساعات</button>
     </div>
- 
+
     <div id="editTimeFields">
       <div class="manual-grid" style="grid-template-columns:1fr 1fr 1fr">
         <div class="manual-field"><label>التاريخ</label><input type="date" id="editDate"></div>
@@ -381,14 +381,14 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
         <div class="manual-field"><label>إلى</label><input type="time" id="editOut"></div>
       </div>
     </div>
- 
+
     <div id="editHoursFields" style="display:none">
       <div class="manual-grid two">
         <div class="manual-field"><label>التاريخ</label><input type="date" id="editDateH"></div>
         <div class="manual-field"><label>عدد الساعات</label><input type="number" id="editHours" placeholder="8.5" step="0.25" min="0.25" max="24"></div>
       </div>
     </div>
- 
+
     <div class="manual-field" style="margin-top:10px">
       <label>ملاحظة</label>
       <input type="text" id="editNote" style="width:100%">
@@ -399,9 +399,9 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
     </div>
   </div>
 </div>
- 
+
 <div class="toast" id="toast"></div>
- 
+
 <script>
 // ── Config ──
 const SUPA_URL = 'https://kfrxhngqmmhvmzusklam.supabase.co';
@@ -409,7 +409,7 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const EJS_SERVICE = 'service_1uhqvvh';
 const EJS_TEMPLATE = 'template_qltc485';
 const EJS_PUBKEY = 'PbpxqMztyCKlZxg_6';
- 
+
 // ── State ──
 let currentUser = null;
 let allRecords = [];
@@ -418,7 +418,7 @@ let timerInterval = null;
 let activeSession = null;
 let currentEntryMode = 'time';
 let currentEditMode = 'time';
- 
+
 // ── Init ──
 window.addEventListener('load', async () => {
   emailjs.init(EJS_PUBKEY);
@@ -434,13 +434,13 @@ window.addEventListener('load', async () => {
   document.getElementById('manDate').value = today();
   document.getElementById('manDateH').value = today();
 });
- 
+
 function today() { return new Date().toISOString().split('T')[0]; }
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
- 
+
 // ── API ──
 const hdrs = () => ({'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Prefer':'return=representation'});
 async function apiGet(table, params='') {
@@ -458,7 +458,7 @@ async function apiPatch(table, id, body) {
 async function apiDelete(table, id) {
   await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, {method:'DELETE',headers:hdrs()});
 }
- 
+
 // ── Auth Helpers ──
 function hashPass(p) { return btoa(unescape(encodeURIComponent(p+'_salt2024att'))); }
 function showMsg(msg,type='error') {
@@ -466,7 +466,7 @@ function showMsg(msg,type='error') {
   el.textContent=msg; el.className=`auth-msg ${type}`; el.style.display='block';
 }
 function clearMsg() { document.getElementById('authMsg').style.display='none'; }
- 
+
 function switchTab(tab) {
   clearMsg();
   const tabs = ['login','register','forgot'];
@@ -475,7 +475,7 @@ function switchTab(tab) {
   document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
   document.getElementById('forgotForm').style.display = tab==='forgot'?'block':'none';
 }
- 
+
 async function handleRegister() {
   clearMsg();
   const name=document.getElementById('rName').value.trim();
@@ -496,7 +496,7 @@ async function handleRegister() {
   } catch{showMsg('خطأ في الاتصال');}
   finally{btn.disabled=false;btn.textContent='إنشاء الحساب';}
 }
- 
+
 async function handleLogin() {
   clearMsg();
   const email=document.getElementById('lEmail').value.trim().toLowerCase();
@@ -515,7 +515,7 @@ async function handleLogin() {
   } catch{showMsg('خطأ في الاتصال');}
   finally{btn.disabled=false;btn.textContent='دخول';}
 }
- 
+
 async function handleForgot() {
   clearMsg();
   const email=document.getElementById('fEmail').value.trim().toLowerCase();
@@ -539,21 +539,21 @@ async function handleForgot() {
   } catch(e){showMsg('خطأ في الإرسال، تأكد من الإيميل');}
   finally{btn.disabled=false;btn.textContent='📧 إرسال كلمة المرور';}
 }
- 
+
 function handleLogout() {
   currentUser=null; allRecords=[]; activeSession=null;
   localStorage.removeItem('att_user');
   clearInterval(clockInterval); clearInterval(timerInterval);
   showScreen('authScreen');
 }
- 
+
 // ── App ──
 function initApp() {
   document.getElementById('welcomeName').textContent=currentUser.name;
   document.getElementById('salRate').value=currentUser.hourly_rate||'';
   startClock(); checkSession(); renderAll();
 }
- 
+
 function startClock() {
   clearInterval(clockInterval);
   const upd=()=>{
@@ -563,7 +563,7 @@ function startClock() {
   };
   upd(); clockInterval=setInterval(upd,1000);
 }
- 
+
 // ── Records ──
 async function loadRecords() {
   try {
@@ -571,16 +571,16 @@ async function loadRecords() {
     if(!Array.isArray(allRecords)) allRecords=[];
   } catch{allRecords=[];}
 }
- 
+
 function renderAll() { renderStats(); renderHistory(); calcSalary(); }
- 
+
 function renderStats() {
   const total=allRecords.reduce((s,r)=>s+parseFloat(r.hours),0);
   document.getElementById('statHours').textContent=total.toFixed(1);
   document.getElementById('statDays').textContent=allRecords.length;
   document.getElementById('salHours').value=total.toFixed(2);
 }
- 
+
 function renderHistory(records=allRecords,containerId='recordsContainer') {
   const container=document.getElementById(containerId);
   if(!records.length){container.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>لا توجد سجلات</p></div>';return;}
@@ -604,7 +604,7 @@ function renderHistory(records=allRecords,containerId='recordsContainer') {
     <thead><tr><th>التاريخ</th><th>حضور</th><th>انصراف</th><th>الساعات</th><th></th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 }
- 
+
 // ── Mode Toggle ──
 function switchMode(mode) {
   currentEntryMode=mode;
@@ -620,7 +620,7 @@ function switchEditMode(mode) {
   document.getElementById('editTimeFields').style.display=mode==='time'?'block':'none';
   document.getElementById('editHoursFields').style.display=mode==='hours'?'block':'none';
 }
- 
+
 // ── Clock (session lives in Supabase now, works across devices) ──
 async function checkSession() {
   try {
@@ -669,11 +669,15 @@ async function handleClock() {
     const btn=document.getElementById('mainBtn');
     btn.disabled=true;
     try {
-      await apiPost('active_sessions',{user_id:currentUser.id,start_time:now});
+      const result=await apiPost('active_sessions',{user_id:currentUser.id,start_time:now});
+      if(!result || !result[0]){
+        showToast('❌ فشل تسجيل الحضور، حاول تاني','error');
+        return;
+      }
       activeSession={startTime:now};
       setCheckoutMode(now);
       showToast('تم تسجيل الحضور ✅','success');
-    } catch{showToast('خطأ في الاتصال','error');}
+    } catch{showToast('❌ خطأ في الاتصال، حاول تاني','error');}
     finally{btn.disabled=false;}
   } else {
     const start=new Date(activeSession.startTime);
@@ -692,7 +696,7 @@ async function handleClock() {
     finally{btn.disabled=false;}
   }
 }
- 
+
 // ── Manual Add ──
 async function handleManualAdd() {
   let date,hours,checkIn='00:00:00',checkOut='00:00:00';
@@ -725,7 +729,7 @@ async function handleManualAdd() {
   } catch{showToast('خطأ في الإضافة','error');}
   finally{btn.disabled=false;btn.textContent='➕ إضافة السجل';}
 }
- 
+
 async function saveRecord(data) {
   const rec={user_id:currentUser.id,...data};
   const result=await apiPost('time_records',rec);
@@ -735,7 +739,7 @@ async function saveRecord(data) {
     renderAll(); renderHistory();
   }
 }
- 
+
 // ── Edit ──
 function openEdit(id) {
   const r=allRecords.find(x=>x.id===id);
@@ -751,7 +755,7 @@ function openEdit(id) {
   document.getElementById('editModal').classList.add('show');
 }
 function closeModal(){document.getElementById('editModal').classList.remove('show');}
- 
+
 async function saveEdit() {
   const id=document.getElementById('editId').value;
   const note=document.getElementById('editNote').value.trim();
@@ -779,7 +783,7 @@ async function saveEdit() {
     showToast('✅ تم التعديل بنجاح','success');
   } catch{showToast('خطأ في التعديل','error');}
 }
- 
+
 async function deleteRecord(id) {
   if(!confirm('هل تريد حذف هذا السجل؟')) return;
   try {
@@ -789,7 +793,7 @@ async function deleteRecord(id) {
     showToast('تم الحذف','success');
   } catch{showToast('خطأ في الحذف','error');}
 }
- 
+
 // ── Salary ──
 function calcSalary() {
   const from=document.getElementById('fromDate').value;
@@ -821,7 +825,7 @@ async function saveRate(){
   if(!currentUser) return;
   try{await apiPatch('users',currentUser.id,{hourly_rate:rate});currentUser.hourly_rate=rate;localStorage.setItem('att_user',JSON.stringify(currentUser));}catch{}
 }
- 
+
 // ── Records Filter ──
 function applyRecordsFilter() {
   const from=document.getElementById('recFrom').value;
@@ -842,7 +846,7 @@ function resetRecordsFilter() {
   document.getElementById('recSort').value='date_desc';
   applyRecordsFilter();
 }
- 
+
 // ── Navigation ──
 function switchPage(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -853,14 +857,14 @@ function switchPage(page){
   if(page==='records') applyRecordsFilter();
   if(page==='salary') calcSalary();
 }
- 
+
 // ── Toast ──
 function showToast(msg,type=''){
   const t=document.getElementById('toast');
   t.textContent=msg; t.className=`toast ${type} show`;
   setTimeout(()=>t.classList.remove('show'),2800);
 }
- 
+
 // Enter key
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&document.getElementById('authScreen').classList.contains('active')){
