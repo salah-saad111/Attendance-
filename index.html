@@ -6,7 +6,6 @@
 <title>نظام الحضور والانصراف</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
 :root {
@@ -241,7 +240,6 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchPage('home')">🏠 الرئيسية</button>
     <button class="nav-tab" onclick="switchPage('records')">📋 السجلات</button>
-    <button class="nav-tab" onclick="switchPage('stats')">📊 إحصائيات</button>
     <button class="nav-tab" onclick="switchPage('salary')">💰 الراتب</button>
   </div>
  
@@ -333,27 +331,6 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="card">
       <div class="card-title"><span class="ic">📋</span> سجل أيام العمل</div>
       <div id="recordsContainer"><div class="empty-state"><div class="ei">📭</div><p>لا توجد سجلات بعد</p></div></div>
-    </div>
-  </div>
- 
-  <!-- Stats -->
-  <div id="statsPage" class="page">
-    <div class="kpi-grid">
-      <div class="kpi-box"><div class="kpi-val" id="kpiDays">0</div><div class="kpi-lbl">أيام عمل</div></div>
-      <div class="kpi-box"><div class="kpi-val" id="kpiHours">0</div><div class="kpi-lbl">إجمالي ساعات</div></div>
-      <div class="kpi-box"><div class="kpi-val" id="kpiAvg">0</div><div class="kpi-lbl">متوسط/يوم</div></div>
-    </div>
-    <div class="chart-card">
-      <div class="card-title"><span class="ic">📈</span> الساعات خلال آخر 14 يوم</div>
-      <div class="chart-wrap"><canvas id="hoursChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="card-title"><span class="ic">💵</span> الأجر اليومي (آخر 14 يوم)</div>
-      <div class="chart-wrap"><canvas id="moneyChart"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="card-title"><span class="ic">📅</span> توزيع الساعات حسب أيام الأسبوع</div>
-      <div class="chart-wrap"><canvas id="weekdayChart"></canvas></div>
     </div>
   </div>
  
@@ -866,71 +843,15 @@ function resetRecordsFilter() {
   applyRecordsFilter();
 }
  
-// ── Stats Page ──
-let chartHours,chartMoney,chartWeekday;
-function renderStatsPage() {
-  const total=allRecords.reduce((s,r)=>s+parseFloat(r.hours),0);
-  const days=allRecords.length;
-  document.getElementById('kpiDays').textContent=days;
-  document.getElementById('kpiHours').textContent=total.toFixed(1);
-  document.getElementById('kpiAvg').textContent=days?(total/days).toFixed(1):'0';
- 
-  const rate=parseFloat(currentUser.hourly_rate)||0;
- 
-  // Last 14 days
-  const labels=[]; const hoursData=[]; const moneyData=[];
-  for(let i=13;i>=0;i--){
-    const d=new Date(); d.setDate(d.getDate()-i);
-    const ds=d.toISOString().split('T')[0];
-    const dayRecs=allRecords.filter(r=>r.date===ds);
-    const dayHours=dayRecs.reduce((s,r)=>s+parseFloat(r.hours),0);
-    labels.push(d.toLocaleDateString('ar-EG',{day:'numeric',month:'numeric'}));
-    hoursData.push(dayHours.toFixed(2));
-    moneyData.push((dayHours*rate).toFixed(0));
-  }
- 
-  // Weekday distribution
-  const weekdayNames=['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
-  const weekdayTotals=[0,0,0,0,0,0,0];
-  allRecords.forEach(r=>{
-    const d=new Date(r.date+'T00:00:00');
-    weekdayTotals[d.getDay()]+=parseFloat(r.hours);
-  });
- 
-  if(chartHours) chartHours.destroy();
-  if(chartMoney) chartMoney.destroy();
-  if(chartWeekday) chartWeekday.destroy();
- 
-  const primaryColor='#3b82f6';
-  Chart.defaults.font.family="'Cairo',sans-serif";
- 
-  chartHours=new Chart(document.getElementById('hoursChart'),{
-    type:'bar',
-    data:{labels,datasets:[{label:'ساعات',data:hoursData,backgroundColor:'rgba(59,130,246,0.7)',borderRadius:5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
-  });
-  chartMoney=new Chart(document.getElementById('moneyChart'),{
-    type:'line',
-    data:{labels,datasets:[{label:'جنيه',data:moneyData,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.15)',fill:true,tension:0.35}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
-  });
-  chartWeekday=new Chart(document.getElementById('weekdayChart'),{
-    type:'bar',
-    data:{labels:weekdayNames,datasets:[{label:'ساعات',data:weekdayTotals.map(v=>v.toFixed(1)),backgroundColor:'rgba(14,165,233,0.7)',borderRadius:5}]},
-    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true}}}
-  });
-}
- 
 // ── Navigation ──
 function switchPage(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById(page+'Page').classList.add('active');
-  const idx=['home','records','stats','salary'].indexOf(page);
+  const idx=['home','records','salary'].indexOf(page);
   document.querySelectorAll('.nav-tab')[idx].classList.add('active');
   if(page==='records') applyRecordsFilter();
   if(page==='salary') calcSalary();
-  if(page==='stats') renderStatsPage();
 }
  
 // ── Toast ──
