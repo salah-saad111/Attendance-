@@ -247,6 +247,7 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
     <button class="nav-tab active" onclick="switchPage('home')">🏠 الرئيسية</button>
     <button class="nav-tab" onclick="switchPage('records')">📋 السجلات</button>
     <button class="nav-tab" onclick="switchPage('salary')">💰 الراتب</button>
+    <button class="nav-tab" onclick="switchPage('cashier')">🏦 الخزنة</button>
   </div>
 
   <!-- Home -->
@@ -366,6 +367,45 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
     <div class="card">
       <div class="card-title"><span class="ic">📊</span> ملخص الفترة</div>
       <div id="salaryBreakdown"><div class="empty-state"><div class="ei">📊</div><p>اختر فترة أو اعرض الكل</p></div></div>
+    </div>
+  </div>
+
+  <!-- Cashier Page -->
+  <div id="cashierPage" class="page">
+    <div class="card">
+      <div class="card-title"><span class="ic">📝</span> تقفيل الخزنة</div>
+      <div class="manual-grid two">
+        <div class="manual-field"><label>التاريخ</label><input type="date" id="cDate"></div>
+        <div class="manual-field"><label>المبيعات المتوقعة (ج)</label><input type="number" id="cExpected" placeholder="0" oninput="calcCashier()"></div>
+      </div>
+      <div class="manual-grid" style="grid-template-columns:1fr 1fr 1fr;margin-top:4px">
+        <div class="manual-field"><label>نقدي فعلي (ج)</label><input type="number" id="cCash" placeholder="0" oninput="calcCashier()"></div>
+        <div class="manual-field"><label>فيزا فعلي (ج)</label><input type="number" id="cVisa" placeholder="0" oninput="calcCashier()"></div>
+        <div class="manual-field"><label>مصروفات (ج)</label><input type="number" id="cExpenses" placeholder="0" oninput="calcCashier()"></div>
+      </div>
+      <div id="cashierResult" style="margin:14px 0;border-radius:var(--radius-sm);padding:16px;text-align:center;background:var(--surface2);border:1.5px solid var(--border);">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">الفرق (زيادة / عجز)</div>
+        <div id="cashierDiff" style="font-size:30px;font-weight:900;color:var(--text-muted)">—</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">نقدي + فيزا - مصروفات - المتوقع</div>
+      </div>
+      <div class="manual-grid full" style="margin-bottom:12px">
+        <div class="manual-field"><label>ملاحظة (اختياري)</label><input type="text" id="cNote" placeholder="أي ملاحظة..." style="direction:rtl;text-align:right"></div>
+      </div>
+      <button class="btn-add" id="cSaveBtn" onclick="saveCashier()">💾 حفظ التقفيل</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ic">🔍</span> فلتر السجلات</div>
+      <div class="filter-row">
+        <div class="filter-field"><label>من تاريخ</label><input type="date" id="cFrom" onchange="renderCashierRecords()"></div>
+        <div class="filter-field"><label>إلى تاريخ</label><input type="date" id="cTo" onchange="renderCashierRecords()"></div>
+      </div>
+      <button class="btn-add" onclick="resetCashierFilter()" style="background:var(--surface2);color:var(--text-muted);box-shadow:none;border:1.5px solid var(--border);">🔄 عرض الكل</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="ic">🏦</span> سجل التقفيلات</div>
+      <div id="cashierContainer"><div class="empty-state"><div class="ei">📭</div><p>لا توجد سجلات بعد</p></div></div>
     </div>
   </div>
 </div>
@@ -604,7 +644,8 @@ function handleLogout() {
 function initApp() {
   document.getElementById('welcomeName').textContent=currentUser.name;
   document.getElementById('salRate').value=currentUser.hourly_rate||'';
-  startClock(); checkSession(); renderAll();
+  document.getElementById('cDate').value=today();
+  startClock(); checkSession(); renderAll(); loadCashierRecords();
 }
 
 function startClock() {
@@ -953,10 +994,126 @@ function switchPage(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById(page+'Page').classList.add('active');
-  const idx=['home','records','salary'].indexOf(page);
+  const idx=['home','records','salary','cashier'].indexOf(page);
   document.querySelectorAll('.nav-tab')[idx].classList.add('active');
   if(page==='records') applyRecordsFilter();
   if(page==='salary') calcSalary();
+  if(page==='cashier'){ renderCashierRecords(); }
+}
+
+// ── Cashier ──
+let allCashierRecords=[];
+
+async function loadCashierRecords(){
+  try{
+    allCashierRecords=await apiGet('cashier_records',`user_id=eq.${currentUser.id}&order=date.desc&select=*`);
+    if(!Array.isArray(allCashierRecords)) allCashierRecords=[];
+  }catch{allCashierRecords=[];}
+}
+
+function calcCashier(){
+  const expected=parseFloat(document.getElementById('cExpected').value)||0;
+  const cash=parseFloat(document.getElementById('cCash').value)||0;
+  const visa=parseFloat(document.getElementById('cVisa').value)||0;
+  const expenses=parseFloat(document.getElementById('cExpenses').value)||0;
+  const diff=(cash+visa-expenses)-expected;
+  const el=document.getElementById('cashierDiff');
+  const box=document.getElementById('cashierResult');
+  if(!expected&&!cash&&!visa&&!expenses){
+    el.textContent='—'; el.style.color='var(--text-muted)';
+    box.style.background='var(--surface2)'; box.style.borderColor='var(--border)';
+    return;
+  }
+  el.textContent=(diff>=0?'+':'')+diff.toFixed(2)+' ج';
+  if(diff>0){
+    el.style.color='#059669';
+    box.style.background='#f0fdf4'; box.style.borderColor='#bbf7d0';
+  } else if(diff<0){
+    el.style.color='#dc2626';
+    box.style.background='#fef2f2'; box.style.borderColor='#fecaca';
+  } else {
+    el.style.color='var(--text-muted)';
+    box.style.background='var(--surface2)'; box.style.borderColor='var(--border)';
+  }
+}
+
+async function saveCashier(){
+  const date=document.getElementById('cDate').value;
+  const expected=parseFloat(document.getElementById('cExpected').value)||0;
+  const cash=parseFloat(document.getElementById('cCash').value)||0;
+  const visa=parseFloat(document.getElementById('cVisa').value)||0;
+  const expenses=parseFloat(document.getElementById('cExpenses').value)||0;
+  const note=document.getElementById('cNote').value.trim();
+  if(!date) return showToast('أدخل التاريخ','error');
+  if(!expected&&!cash&&!visa) return showToast('أدخل المبالغ','error');
+  const diff=(cash+visa-expenses)-expected;
+  const btn=document.getElementById('cSaveBtn');
+  btn.disabled=true; btn.textContent='جاري الحفظ...';
+  try{
+    const result=await apiPost('cashier_records',{
+      user_id:currentUser.id, date, expected, cash, visa, expenses, diff, note
+    });
+    if(result&&result[0]){
+      allCashierRecords.unshift(result[0]);
+      allCashierRecords.sort((a,b)=>b.date.localeCompare(a.date));
+      renderCashierRecords();
+      // Reset fields
+      document.getElementById('cExpected').value='';
+      document.getElementById('cCash').value='';
+      document.getElementById('cVisa').value='';
+      document.getElementById('cExpenses').value='';
+      document.getElementById('cNote').value='';
+      calcCashier();
+      showToast('✅ تم حفظ التقفيل','success');
+    } else showToast('❌ خطأ في الحفظ','error');
+  }catch{showToast('❌ خطأ في الاتصال','error');}
+  finally{btn.disabled=false;btn.textContent='💾 حفظ التقفيل';}
+}
+
+function renderCashierRecords(){
+  const from=document.getElementById('cFrom').value;
+  const to=document.getElementById('cTo').value;
+  let list=[...allCashierRecords];
+  if(from) list=list.filter(r=>r.date>=from);
+  if(to) list=list.filter(r=>r.date<=to);
+  const container=document.getElementById('cashierContainer');
+  if(!list.length){container.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>لا توجد سجلات</p></div>';return;}
+  const rows=list.map(r=>{
+    const dateAr=new Date(r.date+'T00:00:00').toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'});
+    const diffVal=parseFloat(r.diff);
+    const diffColor=diffVal>0?'#059669':diffVal<0?'#dc2626':'var(--text-muted)';
+    const diffText=(diffVal>=0?'+':'')+diffVal.toFixed(0)+' ج';
+    const note=r.note?`<br><small style="color:var(--text-muted)">${r.note}</small>`:'';
+    return `<tr>
+      <td>${dateAr}${note}</td>
+      <td>${parseFloat(r.expected).toFixed(0)}</td>
+      <td>${parseFloat(r.cash).toFixed(0)}</td>
+      <td>${parseFloat(r.visa).toFixed(0)}</td>
+      <td>${parseFloat(r.expenses).toFixed(0)}</td>
+      <td style="color:${diffColor};font-weight:800">${diffText}</td>
+      <td><button class="btn-del" onclick="deleteCashier('${r.id}')">حذف</button></td>
+    </tr>`;
+  }).join('');
+  container.innerHTML=`<div style="overflow-x:auto"><table class="history-table">
+    <thead><tr><th>التاريخ</th><th>متوقع</th><th>نقدي</th><th>فيزا</th><th>مصروفات</th><th>الفرق</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+async function deleteCashier(id){
+  if(!confirm('حذف هذا التقفيل؟')) return;
+  try{
+    await fetch(`${SUPA_URL}/rest/v1/cashier_records?id=eq.${id}`,{method:'DELETE',headers:hdrs()});
+    allCashierRecords=allCashierRecords.filter(r=>r.id!==id);
+    renderCashierRecords();
+    showToast('تم الحذف','success');
+  }catch{showToast('خطأ في الحذف','error');}
+}
+
+function resetCashierFilter(){
+  document.getElementById('cFrom').value='';
+  document.getElementById('cTo').value='';
+  renderCashierRecords();
 }
 
 // ── Toast ──
