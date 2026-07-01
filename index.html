@@ -384,9 +384,11 @@ body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-h
         <div class="manual-field"><label>مصروفات (ج)</label><input type="number" id="cExpenses" placeholder="0" oninput="calcCashier()"></div>
       </div>
       <div id="cashierResult" style="margin:14px 0;border-radius:var(--radius-sm);padding:16px;text-align:center;background:var(--surface2);border:1.5px solid var(--border);">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">إجمالي تقفيل الخزنة</div>
+        <div id="cashierTotal" style="font-size:22px;font-weight:900;color:var(--primary);margin-bottom:12px">—</div>
         <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">الفرق (زيادة / عجز)</div>
         <div id="cashierDiff" style="font-size:30px;font-weight:900;color:var(--text-muted)">—</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">نقدي + فيزا - مصروفات - المتوقع</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">نقدي + فيزا + مصروفات - المتوقع</div>
       </div>
       <div class="manual-grid full" style="margin-bottom:12px">
         <div class="manual-field"><label>ملاحظة (اختياري)</label><input type="text" id="cNote" placeholder="أي ملاحظة..." style="direction:rtl;text-align:right"></div>
@@ -1016,14 +1018,18 @@ function calcCashier(){
   const cash=parseFloat(document.getElementById('cCash').value)||0;
   const visa=parseFloat(document.getElementById('cVisa').value)||0;
   const expenses=parseFloat(document.getElementById('cExpenses').value)||0;
-  const diff=(cash+visa-expenses)-expected;
+  const totalEl=document.getElementById('cashierTotal');
   const el=document.getElementById('cashierDiff');
   const box=document.getElementById('cashierResult');
   if(!expected&&!cash&&!visa&&!expenses){
+    totalEl.textContent='—';
     el.textContent='—'; el.style.color='var(--text-muted)';
     box.style.background='var(--surface2)'; box.style.borderColor='var(--border)';
     return;
   }
+  const total=cash+visa+expenses;
+  const diff=total-expected;
+  totalEl.textContent=total.toFixed(2)+' ج';
   el.textContent=(diff>=0?'+':'')+diff.toFixed(2)+' ج';
   if(diff>0){
     el.style.color='#059669';
@@ -1046,7 +1052,7 @@ async function saveCashier(){
   const note=document.getElementById('cNote').value.trim();
   if(!date) return showToast('أدخل التاريخ','error');
   if(!expected&&!cash&&!visa) return showToast('أدخل المبالغ','error');
-  const diff=(cash+visa-expenses)-expected;
+  const diff=(cash+visa+expenses)-expected;
   const btn=document.getElementById('cSaveBtn');
   btn.disabled=true; btn.textContent='جاري الحفظ...';
   try{
